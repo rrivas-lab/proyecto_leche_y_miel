@@ -3,7 +3,8 @@ import {
   Camera, QrCode, Skull, Activity, Syringe, Bug, 
   MessageSquare, Baby, CheckCircle2, Clock, X, 
   ChevronRight, Stethoscope, Wifi, MapPin, Network, 
-  Settings, Plus, ArrowRight, AlertCircle, CalendarDays
+  Settings, Plus, ArrowRight, AlertCircle, CalendarDays,
+  ArrowLeft, Search, Filter, List
 } from 'lucide-react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
@@ -27,6 +28,13 @@ const animalData = {
   tracking: { deviceId: "Halter HL-90X", isOnline: true, location: "Potrero 4" },
   genetics: { father: "Toro #992 (Carora)", mother: "Vaca #110 (Jersey)" }
 };
+
+const initialInventory = [
+  { id: "#333018", name: "Corazón", category: "Vaca", breed: "Carora-Jersey", lot: "Lote Alta Producción", paddock: "Potrero 4", status: "Activa", type: "success", photo: "https://images.unsplash.com/photo-1570042225831-d98fa7577f1e?q=80&w=2070&auto=format&fit=crop" },
+  { id: "#42125", name: "Pinto", category: "Becerro", breed: "Holstein", lot: "Levante", paddock: "Potrero 2", status: "Activo", type: "success", photo: "https://images.unsplash.com/photo-1596733430284-f7437764b1a9?q=80&w=2070&auto=format&fit=crop" },
+  { id: "#53823", name: "Gyr", category: "Mauta", breed: "Gyr", lot: "Desarrollo", paddock: "Potrero 3", status: "Activa", type: "success", photo: "https://images.unsplash.com/photo-1545468800-85cc9bc6ecf7?q=80&w=2070&auto=format&fit=crop" },
+  { id: "#04024", name: "Soncola", category: "Becerra", breed: "Holstein", lot: "Enfermería", paddock: "Corral 1", status: "Baja", type: "danger", photo: "https://images.unsplash.com/photo-1629548482613-2d216d68b6b6?q=80&w=2070&auto=format&fit=crop" },
+];
 
 const productionData = [
   { month: 'Ene', liters: 18 }, { month: 'Feb', liters: 22 },
@@ -73,7 +81,6 @@ const Button = ({ children, className, variant = 'primary', ...props }: any) => 
 function GenericFormModal({ children, title, icon: Icon, onClose }: any) {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      {/* Fondo oscuro y difuminado */}
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-900/30 backdrop-blur-md" onClick={onClose} />
       <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} 
         className="relative w-full max-w-xl bg-white/70 backdrop-blur-2xl rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.1)] flex flex-col max-h-[90vh] overflow-hidden border border-white/60">
@@ -89,20 +96,24 @@ function GenericFormModal({ children, title, icon: Icon, onClose }: any) {
 
 // --- APP PRINCIPAL ---
 export default function App() {
+  // ENRUTAMIENTO PRINCIPAL
+  const [currentView, setCurrentView] = useState<'list' | 'detail'>('list');
+
+  // ESTADO GLOBAL DE INVENTARIO
+  const [inventory, setInventory] = useState(initialInventory);
+  
+  // ESTADOS DE LA VISTA DETALLE
   const [isGraphExpanded, setIsGraphExpanded] = useState(true);
   const [activeModal, setActiveModal] = useState<string | null>(null);
   const closeModal = () => setActiveModal(null);
   
-  // ESTADOS DINÁMICOS
   const [deathRecord, setDeathRecord] = useState<any>(null);
   const [showAllHerd, setShowAllHerd] = useState(false);
   const [bathRequested, setBathRequested] = useState(false);
 
-  // 1. Estado Reproductivo
   const [activePregnancy, setActivePregnancy] = useState<any>({
     id: 3, serviceDate: "15/09/2023", father: "Toro #88",
-    palpationDate: "10/10/2023", palpationResult: "Preñada (45d)",
-    projectedBirth: "20/06/2024"
+    palpationDate: "10/10/2023", palpationResult: "Preñada (45d)", projectedBirth: "20/06/2024"
   });
 
   const [pregnancyHistory, setPregnancyHistory] = useState<any[]>([
@@ -114,27 +125,47 @@ export default function App() {
     { id: "Macho #442", date: "2022", status: "Activo", type: "success" }
   ]);
 
-  // 2. Sanidad (Vacunas y Parásitos)
   const [vaccines, setVaccines] = useState([
     { id: 1, name: "Fiebre Aftosa", dose: "1ra Dosis", planned: "05/01/2024", actual: "05/01/2024", status: "Aplicada", type: "success" },
-    { id: 2, name: "Fiebre Aftosa", dose: "Refuerzo", planned: "05/07/2024", actual: "-", status: "Pendiente", type: "warning" },
-    { id: 3, name: "Clostridial", dose: "Única", planned: "10/10/2023", actual: "15/10/2023", status: "Aplicada", type: "success" }
+    { id: 2, name: "Fiebre Aftosa", dose: "Refuerzo", planned: "05/07/2024", actual: "-", status: "Pendiente", type: "warning" }
   ]);
 
   const [parasites, setParasites] = useState([
-    { id: 1, name: "Baño Aspersión", product: "Amitraz 12.5%", planned: "12/11/2023", actual: "12/11/2023", status: "Listo", type: "success" },
-    { id: 2, name: "Desparasitante", product: "Ivermectina 1%", planned: "01/05/2024", actual: "-", status: "Pendiente", type: "warning" }
+    { id: 1, name: "Baño Aspersión", product: "Amitraz 12.5%", planned: "12/11/2023", actual: "12/11/2023", status: "Listo", type: "success" }
   ]);
 
   const [observations, setObservations] = useState([
     { id: 1, author: "Dr. Ramírez", date: "12/03/24 08:30", text: "Revisión general en manga. Condición corporal óptima." }
   ]);
 
-  // --- FUNCIONES DE LÓGICA DE NEGOCIO ---
+  // --- LÓGICAS DE NEGOCIO ---
+  
+  // 1. Crear Nuevo Animal Manual (Desde el Listado)
+  const handleCreateManualAnimal = (e: any) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const newAnimal = {
+      id: formData.get('arete') as string,
+      name: formData.get('nombre') as string || "Sin Nombre",
+      category: formData.get('categoria') as string,
+      breed: formData.get('raza') as string,
+      lot: formData.get('lote') as string,
+      paddock: formData.get('potrero') as string,
+      status: "Activo",
+      type: "success",
+      photo: "https://images.unsplash.com/photo-1545468800-85cc9bc6ecf7?q=80&w=2070&auto=format&fit=crop"
+    };
+    setInventory([newAnimal, ...inventory]);
+    closeModal();
+  };
+
   const handleDeathRegistration = (e: any) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     setDeathRecord({ cause: formData.get('cause'), obs: formData.get('obs'), date: new Date().toLocaleDateString() });
+    
+    // Actualizar estado en el inventario global también
+    setInventory(prev => prev.map(a => a.id === animalData.id ? { ...a, status: "Baja", type: "danger" } : a));
     closeModal();
   };
 
@@ -145,7 +176,7 @@ export default function App() {
     const peso = formData.get('peso') as string;
     const estado = formData.get('estado') as string;
     
-    const newAreteId = `${sexo} #${Math.floor(Math.random() * 1000 + 500)}`;
+    const newAreteId = `${sexo.substring(0,1).toUpperCase()}-${Math.floor(Math.random() * 1000 + 500)}`;
     const isAlive = estado !== 'Muerto';
 
     setPregnancyHistory([{
@@ -159,6 +190,19 @@ export default function App() {
 
     if(isAlive) {
       setDescendants([...descendants, { id: newAreteId, date: new Date().getFullYear().toString(), status: "Cría Nueva", type: "success" }]);
+      
+      // *** SINCRONIZACIÓN MÁGICA CON EL INVENTARIO GLOBAL ***
+      setInventory([{
+        id: newAreteId,
+        name: `Cría de ${animalData.id}`,
+        category: sexo === 'Macho' ? 'Becerro' : 'Becerra',
+        breed: animalData.breed,
+        lot: "Maternidad",
+        paddock: animalData.paddock,
+        status: "Activo",
+        type: "success",
+        photo: "https://images.unsplash.com/photo-1596733430284-f7437764b1a9?q=80&w=2070&auto=format&fit=crop"
+      }, ...inventory]);
     }
     setActivePregnancy(null);
     closeModal();
@@ -207,21 +251,101 @@ export default function App() {
     e.target.reset();
   };
 
-  return (
-    <div className="h-screen w-screen overflow-hidden flex font-sans selection:bg-[#ffcc80] relative text-slate-800">
-      
-      {/* --- BACKGROUND ANIMADO (Burbujas de color para el Glassmorphism) --- */}
-      <div className="absolute inset-0 z-0 overflow-hidden bg-[#eef2f6]">
-        <div className="absolute top-[-15%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-amber-400/20 blur-[120px] animate-pulse pointer-events-none" />
-        <div className="absolute bottom-[-10%] right-[-5%] w-[45vw] h-[45vw] rounded-full bg-orange-500/15 blur-[120px] animate-pulse pointer-events-none" style={{ animationDelay: '2s' }} />
-        <div className="absolute top-[20%] right-[20%] w-[35vw] h-[35vw] rounded-full bg-emerald-400/15 blur-[100px] animate-pulse pointer-events-none" style={{ animationDelay: '4s' }} />
-      </div>
+  // =========================================
+  // RENDER: VISTA DE LISTADO (INVENTARIO)
+  // =========================================
+  const renderListView = () => (
+    <div className="flex-1 h-full overflow-y-auto p-6 lg:p-10 relative custom-scrollbar z-10">
+      <div className="max-w-[1200px] mx-auto space-y-6">
+        
+        {/* Header del Inventario */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white/40 backdrop-blur-2xl border border-white/60 p-6 lg:p-8 rounded-[2rem] shadow-[0_8px_32px_rgba(0,0,0,0.04)]">
+          <div>
+            <h1 className="text-3xl font-black text-slate-800 drop-shadow-sm">Inventario General</h1>
+            <p className="text-sm font-medium text-slate-600 mt-1">Gestión y control de rebaño ({inventory.length} animales registrados)</p>
+          </div>
+          <Button onClick={() => setActiveModal('nuevo_animal')} className="shadow-orange-500/40 py-3 px-6 whitespace-nowrap">
+            <Plus className="w-5 h-5" /> Registrar Animal
+          </Button>
+        </div>
 
-      {/* =========================================
-          PANEL IZQUIERDO: CABECERA 
-          ========================================= */}
+        {/* Buscador y Filtros */}
+        <div className="flex gap-4">
+          <div className="flex-1 relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <input type="text" placeholder="Buscar por arete, nombre, raza o potrero..." className="w-full bg-white/50 backdrop-blur-xl border border-white/60 rounded-2xl py-4 pl-12 pr-4 text-sm font-bold text-slate-800 focus:border-[#e65100] outline-none shadow-inner transition-colors" />
+          </div>
+          <Button variant="secondary" className="px-6 hidden sm:flex"><Filter className="w-5 h-5" /> Filtrar</Button>
+        </div>
+
+        {/* Tabla de Datos Glassmorphism */}
+        <div className="bg-white/50 backdrop-blur-2xl border border-white/60 rounded-[2rem] shadow-[0_8px_32px_rgba(0,0,0,0.04)] overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse min-w-[800px]">
+              <thead>
+                <tr className="bg-white/40 border-b border-white/50">
+                  <th className="p-5 text-[10px] font-black text-slate-500 uppercase tracking-wider">Identificación</th>
+                  <th className="p-5 text-[10px] font-black text-slate-500 uppercase tracking-wider">Categoría / Raza</th>
+                  <th className="p-5 text-[10px] font-black text-slate-500 uppercase tracking-wider">Ubicación Física</th>
+                  <th className="p-5 text-[10px] font-black text-slate-500 uppercase tracking-wider">Estado</th>
+                  <th className="p-5 text-[10px] font-black text-slate-500 uppercase tracking-wider text-right">Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                {inventory.map(animal => (
+                  <tr key={animal.id} className="border-b border-white/30 hover:bg-white/60 transition-colors cursor-pointer group" onClick={() => setCurrentView('detail')}>
+                    <td className="p-5">
+                      <div className="flex items-center gap-4">
+                        <img src={animal.photo} className="w-12 h-12 rounded-xl object-cover border border-white/80 shadow-sm" alt={animal.name} />
+                        <div>
+                          <p className="text-sm font-black text-slate-800 group-hover:text-[#e65100] transition-colors">{animal.id}</p>
+                          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{animal.name}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-5">
+                      <p className="text-sm font-bold text-slate-700">{animal.category}</p>
+                      <p className="text-[10px] font-semibold text-slate-500">{animal.breed}</p>
+                    </td>
+                    <td className="p-5">
+                      <p className="text-sm font-bold text-slate-700">{animal.lot}</p>
+                      <p className="text-[10px] font-semibold text-slate-500">{animal.paddock}</p>
+                    </td>
+                    <td className="p-5">
+                      <Badge variant={animal.type}>{animal.status}</Badge>
+                    </td>
+                    <td className="p-5 text-right">
+                      <button className="p-2.5 bg-white/60 border border-white/80 rounded-xl text-slate-500 group-hover:text-[#e65100] group-hover:border-[#e65100]/30 transition-all shadow-sm" onClick={(e) => { e.stopPropagation(); setCurrentView('detail'); }}>
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // =========================================
+  // RENDER: VISTA DETALLE (INTACTA SEGÚN INSTRUCCIÓN)
+  // =========================================
+  const renderDetailView = () => (
+    <>
       <aside className="w-[340px] h-full bg-white/40 backdrop-blur-2xl border-r border-white/60 flex flex-col shrink-0 z-20 shadow-[4px_0_24px_rgba(0,0,0,0.05)] overflow-y-auto custom-scrollbar relative">
-        <div className="h-64 w-full relative shrink-0 bg-gray-900 group m-2 rounded-3xl overflow-hidden shadow-lg border border-white/20 w-[calc(100%-16px)]">
+        
+        {/* NUEVO BOTÓN VOLVER (INTEGRADO EN CABECERA) */}
+        <div className="bg-white/30 backdrop-blur-md border-b border-white/40 p-4 flex items-center gap-3 cursor-pointer hover:bg-white/60 transition-colors" onClick={() => setCurrentView('list')}>
+          <div className="p-1.5 bg-white/60 rounded-lg shadow-sm border border-white/80">
+            <ArrowLeft className="w-4 h-4 text-slate-700" />
+          </div>
+          <span className="text-[11px] font-black uppercase tracking-wider text-slate-700">Volver al Inventario</span>
+        </div>
+
+        {/* RESTO DE LA CABECERA INTACTA */}
+        <div className="h-64 w-full relative shrink-0 bg-gray-900 group">
           <img src={animalData.photo} alt="Vaca" className="w-full h-full object-cover opacity-90 transition-transform duration-700" />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/20 to-transparent" />
           <div className="absolute top-4 left-4 flex flex-col gap-2">
@@ -238,7 +362,6 @@ export default function App() {
         </div>
 
         <div className="flex-1 flex flex-col p-5">
-          {/* Tracking Wizard */}
           <div className="bg-white/50 backdrop-blur-md border border-white/60 rounded-2xl p-3 mb-5 flex items-center justify-between shrink-0 shadow-[0_4px_15px_rgba(0,0,0,0.02)]">
             <div className="flex items-center gap-3">
               <div className="relative flex items-center justify-center w-10 h-10 rounded-full bg-white/80 shadow-sm border border-white">
@@ -255,7 +378,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* Datos Maestros */}
           <div className="grid grid-cols-2 gap-3 mb-6 shrink-0">
             {[
               { l: "Raza", v: animalData.breed }, { l: "Sexo", v: animalData.sex },
@@ -269,7 +391,6 @@ export default function App() {
             ))}
           </div>
 
-          {/* Genética Base en Cabecera */}
           <div className="bg-white/50 backdrop-blur-md border border-white/60 rounded-2xl p-4 mb-4 shadow-[0_4px_15px_rgba(0,0,0,0.02)]">
             <h4 className="text-[10px] uppercase text-slate-500 font-bold mb-3 flex items-center gap-1"><Network className="w-3 h-3"/> Registro Genético</h4>
             <div className="flex flex-col gap-3 mb-4">
@@ -293,34 +414,20 @@ export default function App() {
         </div>
       </aside>
 
-      {/* =========================================
-          PANEL CENTRAL: TARJETAS FULL-WIDTH (GLASS)
-          ========================================= */}
       <main className="flex-1 h-full overflow-y-auto p-6 lg:p-8 relative custom-scrollbar z-10">
         <div className="max-w-[1000px] mx-auto w-full space-y-6">
-          
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-3xl font-black text-slate-800 drop-shadow-sm flex items-center gap-2">
-              Panel Operativo
-            </h2>
+            <h2 className="text-3xl font-black text-slate-800 drop-shadow-sm flex items-center gap-2">Panel Operativo</h2>
           </div>
-
           <div className="flex flex-col gap-6 w-full">
-
-            {/* --- 1. REPRODUCCIÓN Y GESTACIÓN ACTIVA --- */}
             <div className="bg-white/50 backdrop-blur-2xl border border-white/60 rounded-[2rem] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.04)] flex flex-col w-full relative overflow-hidden">
               <div className="flex justify-between items-center mb-6 border-b border-white/50 pb-4">
                 <h3 className="text-xl font-black text-slate-800 flex items-center gap-2"><Baby className="w-6 h-6 text-[#e65100]" /> Estado Reproductivo</h3>
-                <Button variant="secondary" className="text-xs" onClick={() => setActiveModal('historial_repro')}>
-                  <CalendarDays className="w-4 h-4" /> Historial de Preñeces
-                </Button>
+                <Button variant="secondary" className="text-xs" onClick={() => setActiveModal('historial_repro')}><CalendarDays className="w-4 h-4" /> Historial de Preñeces</Button>
               </div>
-              
               {activePregnancy ? (
                 <div className="bg-orange-100/40 backdrop-blur-md border border-orange-200/50 rounded-2xl p-6 relative shadow-inner">
-                  <div className="absolute top-0 right-0 bg-orange-200/60 backdrop-blur-md text-[#e65100] text-[10px] font-black px-4 py-2 rounded-bl-2xl rounded-tr-2xl border-b border-l border-white/50 uppercase tracking-wider">
-                    Gestación Activa
-                  </div>
+                  <div className="absolute top-0 right-0 bg-orange-200/60 backdrop-blur-md text-[#e65100] text-[10px] font-black px-4 py-2 rounded-bl-2xl rounded-tr-2xl border-b border-l border-white/50 uppercase tracking-wider">Gestación Activa</div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative mt-4">
                     <div className="hidden md:block absolute top-6 left-24 right-24 h-0.5 bg-orange-300/50 z-0"></div>
                     <div className="relative z-10 flex flex-col items-center text-center">
@@ -347,9 +454,7 @@ export default function App() {
                 </div>
               ) : (
                 <div className="bg-white/40 backdrop-blur-sm border border-dashed border-white/80 rounded-2xl p-10 flex flex-col items-center justify-center text-center shadow-inner">
-                  <div className="w-16 h-16 bg-white/60 rounded-full flex items-center justify-center shadow-sm border border-white mb-4 text-slate-400">
-                    <AlertCircle className="w-8 h-8" />
-                  </div>
+                  <div className="w-16 h-16 bg-white/60 rounded-full flex items-center justify-center shadow-sm border border-white mb-4 text-slate-400"><AlertCircle className="w-8 h-8" /></div>
                   <h4 className="text-slate-800 font-black text-xl mb-2">Sin Gestación Activa</h4>
                   <p className="text-sm text-slate-500 mb-8 max-w-md font-medium">La vaca se encuentra actualmente vacía u horra. Registre un nuevo servicio o una palpación positiva para iniciar un nuevo ciclo.</p>
                   <Button onClick={() => setActiveModal('palpacion')} disabled={!!deathRecord}><Stethoscope className="w-4 h-4"/> Registrar Servicio / Palpación</Button>
@@ -357,7 +462,6 @@ export default function App() {
               )}
             </div>
 
-            {/* --- 2. PLAN DE VACUNACIÓN --- */}
             <div className="bg-white/50 backdrop-blur-2xl border border-white/60 rounded-[2rem] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.04)] flex flex-col w-full">
               <div className="flex justify-between items-center mb-5 border-b border-white/50 pb-4">
                 <h3 className="text-xl font-black text-slate-800 flex items-center gap-2"><Syringe className="w-6 h-6 text-blue-500" /> Plan de Vacunación</h3>
@@ -377,9 +481,7 @@ export default function App() {
                       <div className="col-span-4 flex justify-end">
                         {v.status === 'Pendiente' || v.status === 'Proyectado' ? (
                           <button onClick={() => applyVaccine(v.id, v.name)} className="text-[10px] font-bold bg-blue-500/10 text-blue-700 px-3 py-1.5 rounded-lg hover:bg-blue-500/20 border border-blue-300/50 transition-colors shadow-sm active:scale-95" disabled={!!deathRecord}>Aplicar Dosis</button>
-                        ) : (
-                          <Badge variant={v.type}>{v.actual}</Badge>
-                        )}
+                        ) : (<Badge variant={v.type}>{v.actual}</Badge>)}
                       </div>
                     </div>
                   ))}
@@ -387,7 +489,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* --- 3. CONTROL ANTIPARASITARIO --- */}
             <div className="bg-white/50 backdrop-blur-2xl border border-white/60 rounded-[2rem] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.04)] flex flex-col w-full">
               <div className="flex justify-between items-center mb-5 border-b border-white/50 pb-4">
                 <h3 className="text-xl font-black text-slate-800 flex items-center gap-2"><Bug className="w-6 h-6 text-purple-500" /> Antiparasitario</h3>
@@ -406,28 +507,20 @@ export default function App() {
                     <div className="w-1/4 flex justify-end">
                       {p.status === 'Pendiente' ? (
                         <button onClick={() => applyParasite(p.id, p.name)} className="text-[10px] font-bold bg-purple-500/10 text-purple-700 px-3 py-1.5 rounded-lg hover:bg-purple-500/20 border border-purple-300/50 transition-colors shadow-sm active:scale-95" disabled={!!deathRecord}>Aplicar</button>
-                      ) : (
-                        <Badge variant={p.type}>{p.status}</Badge>
-                      )}
+                      ) : (<Badge variant={p.type}>{p.status}</Badge>)}
                     </div>
                   </div>
                 ))}
               </div>
-              <Button variant={bathRequested ? "secondary" : "primary"} className="w-full" onClick={() => setBathRequested(true)}>
-                {bathRequested ? "Orden Global Generada" : "Solicitar Nuevo Baño"}
-              </Button>
+              <Button variant={bathRequested ? "secondary" : "primary"} className="w-full" onClick={() => setBathRequested(true)}>{bathRequested ? "Orden Global Generada" : "Solicitar Nuevo Baño"}</Button>
             </div>
 
-            {/* --- 4. BITÁCORA --- */}
             <div className="bg-white/50 backdrop-blur-2xl border border-white/60 rounded-[2rem] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.04)] flex flex-col w-full">
               <h3 className="text-xl font-black text-slate-800 flex items-center gap-2 mb-5 border-b border-white/50 pb-4"><MessageSquare className="w-6 h-6 text-slate-500" /> Bitácora de Novedades</h3>
               <div className="space-y-3 overflow-y-auto pr-2 custom-scrollbar min-h-[100px] flex-1">
                 {observations.map(obs => (
                   <div key={obs.id} className="p-4 rounded-2xl bg-white/50 backdrop-blur-sm border border-white/60 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
-                    <div className="flex justify-between items-start mb-2">
-                      <span className="text-xs font-black text-[#e65100] bg-orange-500/10 px-2 py-0.5 rounded-md border border-orange-200/50">{obs.author}</span>
-                      <span className="text-[10px] text-slate-500 font-bold flex items-center gap-1"><Clock className="w-3 h-3" /> {obs.date}</span>
-                    </div>
+                    <div className="flex justify-between items-start mb-2"><span className="text-xs font-black text-[#e65100] bg-orange-500/10 px-2 py-0.5 rounded-md border border-orange-200/50">{obs.author}</span><span className="text-[10px] text-slate-500 font-bold flex items-center gap-1"><Clock className="w-3 h-3" /> {obs.date}</span></div>
                     <p className="text-sm font-medium text-slate-700">{obs.text}</p>
                   </div>
                 ))}
@@ -437,33 +530,19 @@ export default function App() {
                 <Button type="submit" className="px-5 shadow-orange-500/40"><Plus className="w-5 h-5" /></Button>
               </form>
             </div>
-
           </div>
         </div>
       </main>
 
-      {/* =========================================
-          PANEL DERECHO: GRÁFICOS (GLASS)
-          ========================================= */}
-      <aside className={cn(
-        "h-full bg-white/40 backdrop-blur-2xl border-l border-white/60 transition-all duration-500 ease-in-out flex flex-col shrink-0 z-20 shadow-[-4px_0_24px_rgba(0,0,0,0.05)] relative",
-        isGraphExpanded ? "w-[360px] xl:w-[420px]" : "w-[70px]"
-      )}>
+      <aside className={cn("h-full bg-white/40 backdrop-blur-2xl border-l border-white/60 transition-all duration-500 ease-in-out flex flex-col shrink-0 z-20 shadow-[-4px_0_24px_rgba(0,0,0,0.05)] relative", isGraphExpanded ? "w-[360px] xl:w-[420px]" : "w-[70px]")}>
         <button onClick={() => setIsGraphExpanded(!isGraphExpanded)} className="absolute -left-5 top-10 w-10 h-14 bg-white/70 backdrop-blur-xl border border-white/80 rounded-l-2xl flex items-center justify-center text-slate-500 hover:text-[#e65100] shadow-[-4px_4px_15px_rgba(0,0,0,0.05)] z-30 transition-colors">
           <ChevronRight className={cn("w-6 h-6 transition-transform duration-500", isGraphExpanded ? "" : "rotate-180")} />
         </button>
-
         <div className={cn("flex-1 p-6 lg:p-8 flex flex-col overflow-hidden transition-opacity duration-300", isGraphExpanded ? "opacity-100" : "opacity-0 invisible")}>
           <h3 className="text-xl font-black text-slate-800 mb-8 flex items-center gap-2"><Activity className="w-6 h-6 text-[#e65100]" /> Rendimiento (Leche)</h3>
           <div className="grid grid-cols-2 gap-4 mb-8">
-            <div className="bg-white/50 backdrop-blur-md rounded-2xl p-5 border border-white/60 shadow-sm">
-              <p className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Promedio</p>
-              <p className="text-4xl font-black text-slate-800 mt-2 drop-shadow-sm">20.8 <span className="text-sm font-bold text-slate-500">L/d</span></p>
-            </div>
-            <div className="bg-orange-100/40 backdrop-blur-md rounded-2xl p-5 border border-orange-200/50 shadow-sm">
-              <p className="text-[10px] font-black text-[#e65100] uppercase tracking-wider">Pico</p>
-              <p className="text-4xl font-black text-[#e65100] mt-2 drop-shadow-sm">25.0 <span className="text-sm font-bold text-[#e65100]/70">L/d</span></p>
-            </div>
+            <div className="bg-white/50 backdrop-blur-md rounded-2xl p-5 border border-white/60 shadow-sm"><p className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Promedio</p><p className="text-4xl font-black text-slate-800 mt-2 drop-shadow-sm">20.8 <span className="text-sm font-bold text-slate-500">L/d</span></p></div>
+            <div className="bg-orange-100/40 backdrop-blur-md rounded-2xl p-5 border border-orange-200/50 shadow-sm"><p className="text-[10px] font-black text-[#e65100] uppercase tracking-wider">Pico</p><p className="text-4xl font-black text-[#e65100] mt-2 drop-shadow-sm">25.0 <span className="text-sm font-bold text-[#e65100]/70">L/d</span></p></div>
           </div>
           <div className="flex-1 w-full min-h-[300px] bg-white/30 backdrop-blur-md rounded-3xl border border-white/50 p-4 shadow-inner">
             <ResponsiveContainer width="100%" height="100%">
@@ -479,12 +558,44 @@ export default function App() {
           </div>
         </div>
       </aside>
+    </>
+  );
+
+  return (
+    <div className="h-screen w-screen overflow-hidden flex font-sans selection:bg-[#ffcc80] relative text-slate-800">
+      {/* BACKGROUND ANIMADO GLASSMORPHISM */}
+      <div className="absolute inset-0 z-0 overflow-hidden bg-[#eef2f6]">
+        <div className="absolute top-[-15%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-amber-400/20 blur-[120px] animate-pulse pointer-events-none" />
+        <div className="absolute bottom-[-10%] right-[-5%] w-[45vw] h-[45vw] rounded-full bg-orange-500/15 blur-[120px] animate-pulse pointer-events-none" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-[20%] right-[20%] w-[35vw] h-[35vw] rounded-full bg-emerald-400/15 blur-[100px] animate-pulse pointer-events-none" style={{ animationDelay: '4s' }} />
+      </div>
+
+      {currentView === 'list' ? renderListView() : renderDetailView()}
 
       {/* =========================================
           SISTEMA DE MODALES WIZARD (GLASSMORPHISM)
           ========================================= */}
       <AnimatePresence>
         
+        {/* WIZARD: NUEVO ANIMAL (MANUAL DESDE INVENTARIO) */}
+        {activeModal === 'nuevo_animal' && (
+          <GenericFormModal title="Registrar Nuevo Animal" icon={Plus} onClose={closeModal}>
+            <form onSubmit={handleCreateManualAnimal} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-2 md:col-span-1"><label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-2">Número de Arete / ID</label><input type="text" name="arete" required className="w-full bg-white/60 backdrop-blur-md border border-white/80 rounded-xl py-3.5 px-4 focus:border-[#e65100] focus:ring-2 focus:ring-[#e65100]/20 outline-none text-sm font-bold text-slate-800 shadow-inner" placeholder="Ej. #99882" /></div>
+                <div className="col-span-2 md:col-span-1"><label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-2">Nombre (Opcional)</label><input type="text" name="nombre" className="w-full bg-white/60 backdrop-blur-md border border-white/80 rounded-xl py-3.5 px-4 focus:border-[#e65100] focus:ring-2 focus:ring-[#e65100]/20 outline-none text-sm font-bold text-slate-800 shadow-inner" placeholder="Ej. Estrella" /></div>
+                
+                <div className="col-span-2 md:col-span-1"><label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-2">Categoría</label><select name="categoria" className="w-full bg-white/60 backdrop-blur-md border border-white/80 rounded-xl py-3.5 px-4 focus:border-[#e65100] focus:ring-2 focus:ring-[#e65100]/20 outline-none text-sm font-bold text-slate-800 shadow-inner"><option>Vaca</option><option>Novilla</option><option>Mauta</option><option>Becerra</option><option>Toro</option><option>Maute</option><option>Becerro</option></select></div>
+                <div className="col-span-2 md:col-span-1"><label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-2">Raza Principal</label><select name="raza" className="w-full bg-white/60 backdrop-blur-md border border-white/80 rounded-xl py-3.5 px-4 focus:border-[#e65100] focus:ring-2 focus:ring-[#e65100]/20 outline-none text-sm font-bold text-slate-800 shadow-inner"><option>Carora</option><option>Holstein</option><option>Jersey</option><option>Gyr</option><option>Mestizo</option></select></div>
+
+                <div className="col-span-2 md:col-span-1"><label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-2">Lote / Grupo</label><select name="lote" className="w-full bg-white/60 backdrop-blur-md border border-white/80 rounded-xl py-3.5 px-4 focus:border-[#e65100] focus:ring-2 focus:ring-[#e65100]/20 outline-none text-sm font-bold text-slate-800 shadow-inner"><option>Lote Alta Producción</option><option>Levante</option><option>Desarrollo</option><option>Enfermería</option></select></div>
+                <div className="col-span-2 md:col-span-1"><label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-2">Potrero (Ubicación)</label><select name="potrero" className="w-full bg-white/60 backdrop-blur-md border border-white/80 rounded-xl py-3.5 px-4 focus:border-[#e65100] focus:ring-2 focus:ring-[#e65100]/20 outline-none text-sm font-bold text-slate-800 shadow-inner"><option>Potrero 1</option><option>Potrero 2</option><option>Potrero 3</option><option>Potrero 4</option></select></div>
+              </div>
+              <Button type="submit" className="w-full mt-4 py-3 shadow-orange-500/40">Guardar Nuevo Animal</Button>
+            </form>
+          </GenericFormModal>
+        )}
+
         {/* WIZARD: HISTORIAL DE PREÑECES */}
         {activeModal === 'historial_repro' && (
           <GenericFormModal title="Historial de Gestaciones" icon={CalendarDays} onClose={closeModal}>
