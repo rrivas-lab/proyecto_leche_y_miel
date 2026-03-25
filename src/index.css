@@ -5,13 +5,13 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
-body {
-  font-family: var(--font-sans);
-  background-color: #0B0F19; /* Deep dark blue-gray */
-  color: #F1F5F9;
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-800 antialiased overflow-x-hidden;
+  }
 }
 
-/* Custom Scrollbar */
+/* Custom Scrollbar - Limpia y elegante */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
 }
@@ -21,10 +21,9 @@ body {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: #334155;
-  border-radius: 20px;
+  @apply bg-slate-300 rounded-full transition-colors;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: #475569;
+  @apply bg-slate-400;
 }
