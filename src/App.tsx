@@ -3,7 +3,7 @@ import {
   Camera, QrCode, Skull, Activity, Syringe, Bug, 
   MessageSquare, Baby, CheckCircle2, Clock, X, 
   ChevronRight, Stethoscope, Wifi, MapPin, Network, 
-  CalendarDays, Settings, Plus, ArrowRight, History
+  Settings, Plus, ArrowRight, AlertCircle, CalendarDays
 } from 'lucide-react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
@@ -11,7 +11,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from './lib/utils';
 
-// --- MOCK DATA ---
+// --- MOCK DATA ESTÁTICA ---
 const animalData = {
   id: "#333018",
   name: "Corazón",
@@ -39,17 +39,17 @@ const mockHerd = Array.from({ length: 40 }).map((_, i) => ({
   x: Math.random() * 80 + 10, y: Math.random() * 80 + 10,
 }));
 
-// --- COMPONENTES UI BASE ---
+// --- COMPONENTES UI BASE (GLASSMORPHISM) ---
 const Badge = ({ children, variant = 'default', className }: any) => {
   const variants = {
-    default: "bg-gray-100 text-gray-700 border-gray-200",
-    success: "bg-green-50 text-green-700 border-green-200",
-    warning: "bg-yellow-50 text-yellow-700 border-yellow-200",
-    danger: "bg-red-50 text-red-700 border-red-200",
-    info: "bg-blue-50 text-blue-700 border-blue-200",
+    default: "bg-white/40 text-gray-700 border-white/50 backdrop-blur-md",
+    success: "bg-green-400/20 text-green-800 border-green-300/50 backdrop-blur-md",
+    warning: "bg-amber-400/20 text-amber-800 border-amber-300/50 backdrop-blur-md",
+    danger: "bg-red-400/20 text-red-800 border-red-300/50 backdrop-blur-md",
+    info: "bg-blue-400/20 text-blue-800 border-blue-300/50 backdrop-blur-md",
   };
   return (
-    <span className={cn("px-2.5 py-1 border rounded-md text-[10px] font-bold uppercase tracking-wider inline-flex items-center gap-1", variants[variant as keyof typeof variants], className)}>
+    <span className={cn("px-2.5 py-1 border rounded-lg text-[10px] font-bold uppercase tracking-wider inline-flex items-center gap-1 shadow-[0_2px_10px_rgba(0,0,0,0.02)]", variants[variant as keyof typeof variants], className)}>
       {children}
     </span>
   );
@@ -57,88 +57,201 @@ const Badge = ({ children, variant = 'default', className }: any) => {
 
 const Button = ({ children, className, variant = 'primary', ...props }: any) => {
   const variants = {
-    primary: "bg-[#e65100] hover:bg-[#ef6c00] text-white shadow-sm border-[#e65100]",
-    secondary: "bg-white hover:bg-gray-50 text-gray-700 border-gray-300 shadow-sm",
-    danger: "bg-red-50 hover:bg-red-100 text-red-600 border-red-200",
-    ghost: "bg-transparent hover:bg-gray-100 text-gray-600 border-transparent",
+    primary: "bg-gradient-to-r from-[#e65100] to-[#ff7043] hover:from-[#ef6c00] hover:to-[#ff9800] text-white shadow-lg shadow-orange-500/30 border border-orange-400/50",
+    secondary: "bg-white/40 hover:bg-white/60 backdrop-blur-md text-gray-800 border border-white/60 shadow-[0_4px_15px_rgba(0,0,0,0.03)]",
+    danger: "bg-red-500/80 hover:bg-red-500 text-white backdrop-blur-md border border-red-400/50 shadow-lg shadow-red-500/20",
+    ghost: "bg-transparent hover:bg-white/30 text-gray-700 border-transparent backdrop-blur-sm",
   };
   return (
-    <button className={cn("px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 border active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none", variants[variant as keyof typeof variants], className)} {...props}>
+    <button className={cn("px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 border active:scale-[0.97] disabled:opacity-50 disabled:pointer-events-none", variants[variant as keyof typeof variants], className)} {...props}>
       {children}
     </button>
   );
 };
 
+// Componente Wrapper para Formularios (Glassmorphism Modal)
+function GenericFormModal({ children, title, icon: Icon, onClose }: any) {
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      {/* Fondo oscuro y difuminado */}
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-900/30 backdrop-blur-md" onClick={onClose} />
+      <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} 
+        className="relative w-full max-w-xl bg-white/70 backdrop-blur-2xl rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.1)] flex flex-col max-h-[90vh] overflow-hidden border border-white/60">
+        <div className="bg-white/40 backdrop-blur-md p-5 flex items-center justify-between border-b border-white/50">
+          <div className="flex items-center gap-3 text-gray-800"><div className="p-2 bg-white/60 rounded-xl shadow-sm border border-white/60"><Icon className="w-5 h-5 text-[#e65100]" /></div><h2 className="text-lg font-black">{title}</h2></div>
+          <button onClick={onClose} className="p-2 bg-white/50 hover:bg-white/80 border border-white/60 rounded-full text-gray-600 transition-colors shadow-sm"><X className="w-4 h-4" /></button>
+        </div>
+        <div className="p-6 overflow-y-auto custom-scrollbar">{children}</div>
+      </motion.div>
+    </div>
+  );
+}
+
 // --- APP PRINCIPAL ---
 export default function App() {
   const [isGraphExpanded, setIsGraphExpanded] = useState(true);
   const [activeModal, setActiveModal] = useState<string | null>(null);
+  const closeModal = () => setActiveModal(null);
   
-  // Estados Dinámicos
+  // ESTADOS DINÁMICOS
   const [deathRecord, setDeathRecord] = useState<any>(null);
   const [showAllHerd, setShowAllHerd] = useState(false);
   const [bathRequested, setBathRequested] = useState(false);
 
-  // Estado de Vacunas (Lógica Multidosis)
+  // 1. Estado Reproductivo
+  const [activePregnancy, setActivePregnancy] = useState<any>({
+    id: 3, serviceDate: "15/09/2023", father: "Toro #88",
+    palpationDate: "10/10/2023", palpationResult: "Preñada (45d)",
+    projectedBirth: "20/06/2024"
+  });
+
+  const [pregnancyHistory, setPregnancyHistory] = useState<any[]>([
+    { id: 2, status: "Parto Exitoso", serviceDate: "01/07/2021", father: "Toro #992", endDate: "20/05/2022", resultDetail: "Cría Macho (Arete #442)" },
+    { id: 1, status: "Aborto Espontáneo", serviceDate: "10/02/2020", father: "Toro #15", endDate: "05/06/2020", resultDetail: "Gestación interrumpida a los 4 meses" }
+  ]);
+
+  const [descendants, setDescendants] = useState<any[]>([
+    { id: "Macho #442", date: "2022", status: "Activo", type: "success" }
+  ]);
+
+  // 2. Sanidad (Vacunas y Parásitos)
   const [vaccines, setVaccines] = useState([
     { id: 1, name: "Fiebre Aftosa", dose: "1ra Dosis", planned: "05/01/2024", actual: "05/01/2024", status: "Aplicada", type: "success" },
     { id: 2, name: "Fiebre Aftosa", dose: "Refuerzo", planned: "05/07/2024", actual: "-", status: "Pendiente", type: "warning" },
     { id: 3, name: "Clostridial", dose: "Única", planned: "10/10/2023", actual: "15/10/2023", status: "Aplicada", type: "success" }
   ]);
 
+  const [parasites, setParasites] = useState([
+    { id: 1, name: "Baño Aspersión", product: "Amitraz 12.5%", planned: "12/11/2023", actual: "12/11/2023", status: "Listo", type: "success" },
+    { id: 2, name: "Desparasitante", product: "Ivermectina 1%", planned: "01/05/2024", actual: "-", status: "Pendiente", type: "warning" }
+  ]);
+
+  const [observations, setObservations] = useState([
+    { id: 1, author: "Dr. Ramírez", date: "12/03/24 08:30", text: "Revisión general en manga. Condición corporal óptima." }
+  ]);
+
+  // --- FUNCIONES DE LÓGICA DE NEGOCIO ---
+  const handleDeathRegistration = (e: any) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    setDeathRecord({ cause: formData.get('cause'), obs: formData.get('obs'), date: new Date().toLocaleDateString() });
+    closeModal();
+  };
+
+  const handleParto = (e: any) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const sexo = formData.get('sexo') as string;
+    const peso = formData.get('peso') as string;
+    const estado = formData.get('estado') as string;
+    
+    const newAreteId = `${sexo} #${Math.floor(Math.random() * 1000 + 500)}`;
+    const isAlive = estado !== 'Muerto';
+
+    setPregnancyHistory([{
+      id: Date.now(),
+      status: isAlive ? "Parto Exitoso" : "Parto (Cría Muerta)",
+      serviceDate: activePregnancy.serviceDate,
+      father: activePregnancy.father,
+      endDate: new Date().toLocaleDateString(),
+      resultDetail: `Cría ${sexo} (${newAreteId}) - Peso: ${peso}Kg`
+    }, ...pregnancyHistory]);
+
+    if(isAlive) {
+      setDescendants([...descendants, { id: newAreteId, date: new Date().getFullYear().toString(), status: "Cría Nueva", type: "success" }]);
+    }
+    setActivePregnancy(null);
+    closeModal();
+  };
+
+  const handlePalpacion = (e: any) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const diagnostico = formData.get('diagnostico') as string;
+    const obs = formData.get('obs') as string;
+
+    if (!activePregnancy && diagnostico === 'Preñada') {
+      setActivePregnancy({
+        id: Date.now(), serviceDate: "Por determinar", father: "Monta Múltiple",
+        palpationDate: new Date().toLocaleDateString(), palpationResult: "Preñada", projectedBirth: "Calculando..."
+      });
+    } else if (activePregnancy && diagnostico === 'Vacía') {
+      setPregnancyHistory([{
+        id: Date.now(), status: "Pérdida / Aborto", serviceDate: activePregnancy.serviceDate,
+        father: activePregnancy.father, endDate: new Date().toLocaleDateString(), resultDetail: "Diagnosticada vacía. " + obs
+      }, ...pregnancyHistory]);
+      setActivePregnancy(null);
+    } else if (activePregnancy && diagnostico === 'Preñada') {
+      setActivePregnancy({ ...activePregnancy, palpationDate: new Date().toLocaleDateString(), palpationResult: "Preñada (Confirmada)" });
+    }
+    closeModal();
+  };
+
   const applyVaccine = (id: number, name: string) => {
-    // Marca como aplicada y genera la siguiente dosis a los 6 meses (Simulación)
     setVaccines(prev => prev.map(v => v.id === id ? { ...v, actual: new Date().toLocaleDateString(), status: "Aplicada", type: "success" } : v));
     setTimeout(() => {
-      const nextDate = new Date();
-      nextDate.setMonth(nextDate.getMonth() + 6);
-      setVaccines(prev => [...prev, { 
-        id: Date.now(), name, dose: "Siguiente Dosis", planned: nextDate.toLocaleDateString(), actual: "-", status: "Proyectado", type: "info" 
-      }]);
+      const nextDate = new Date(); nextDate.setMonth(nextDate.getMonth() + 6);
+      setVaccines(prev => [...prev, { id: Date.now(), name, dose: "Siguiente Dosis", planned: nextDate.toLocaleDateString(), actual: "-", status: "Proyectado", type: "info" }]);
     }, 500);
   };
 
-  const closeModal = () => setActiveModal(null);
+  const applyParasite = (id: number, name: string) => {
+    setParasites(prev => prev.map(p => p.id === id ? { ...p, actual: new Date().toLocaleDateString(), status: "Aplicado", type: "success" } : p));
+  };
+
+  const handleAddObservation = (e: any) => {
+    e.preventDefault();
+    const text = e.target.elements.obsText.value;
+    if (!text.trim()) return;
+    setObservations([{ id: Date.now(), author: "Usuario Actual", date: new Date().toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }), text }, ...observations]);
+    e.target.reset();
+  };
 
   return (
-    <div className="h-screen w-screen overflow-hidden flex bg-[#f4f5f7] text-gray-800 font-sans selection:bg-[#ffcc80]">
+    <div className="h-screen w-screen overflow-hidden flex font-sans selection:bg-[#ffcc80] relative text-slate-800">
       
+      {/* --- BACKGROUND ANIMADO (Burbujas de color para el Glassmorphism) --- */}
+      <div className="absolute inset-0 z-0 overflow-hidden bg-[#eef2f6]">
+        <div className="absolute top-[-15%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-amber-400/20 blur-[120px] animate-pulse pointer-events-none" />
+        <div className="absolute bottom-[-10%] right-[-5%] w-[45vw] h-[45vw] rounded-full bg-orange-500/15 blur-[120px] animate-pulse pointer-events-none" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-[20%] right-[20%] w-[35vw] h-[35vw] rounded-full bg-emerald-400/15 blur-[100px] animate-pulse pointer-events-none" style={{ animationDelay: '4s' }} />
+      </div>
+
       {/* =========================================
-          PANEL IZQUIERDO: CABECERA (NO CONTRAÍDA)
+          PANEL IZQUIERDO: CABECERA 
           ========================================= */}
-      <aside className="w-[340px] h-full bg-white border-r border-gray-200 flex flex-col shrink-0 z-20 shadow-lg overflow-y-auto custom-scrollbar">
-        <div className="h-64 w-full relative shrink-0 bg-gray-900 group cursor-pointer" onClick={() => setActiveModal('photo')}>
-          <img src={animalData.photo} alt="Vaca" className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-700" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+      <aside className="w-[340px] h-full bg-white/40 backdrop-blur-2xl border-r border-white/60 flex flex-col shrink-0 z-20 shadow-[4px_0_24px_rgba(0,0,0,0.05)] overflow-y-auto custom-scrollbar relative">
+        <div className="h-64 w-full relative shrink-0 bg-gray-900 group m-2 rounded-3xl overflow-hidden shadow-lg border border-white/20 w-[calc(100%-16px)]">
+          <img src={animalData.photo} alt="Vaca" className="w-full h-full object-cover opacity-90 transition-transform duration-700" />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/20 to-transparent" />
           <div className="absolute top-4 left-4 flex flex-col gap-2">
             {!deathRecord ? (
-              <Badge variant="success" className="bg-green-500/90 text-white border-none shadow-md"><CheckCircle2 className="w-3 h-3" /> Activa / Sana</Badge>
+              <Badge variant="success" className="bg-emerald-500/80 backdrop-blur-md text-white border-white/30"><CheckCircle2 className="w-3 h-3" /> Activa / Sana</Badge>
             ) : (
-              <Badge variant="danger" className="bg-red-500/90 text-white border-none shadow-md animate-pulse"><Skull className="w-3 h-3" /> Baja</Badge>
+              <Badge variant="danger" className="bg-red-500/80 backdrop-blur-md text-white border-white/30 animate-pulse"><Skull className="w-3 h-3" /> Baja</Badge>
             )}
           </div>
           <div className="absolute bottom-4 left-4 text-white">
-            <p className="text-xs font-bold uppercase tracking-widest text-gray-300 mb-1">{animalData.name}</p>
-            <h1 className="text-4xl font-black drop-shadow-md leading-none">{animalData.id}</h1>
+            <p className="text-xs font-bold uppercase tracking-widest text-white/80 mb-1">{animalData.name}</p>
+            <h1 className="text-4xl font-black drop-shadow-xl leading-none">{animalData.id}</h1>
           </div>
         </div>
 
         <div className="flex-1 flex flex-col p-5">
           {/* Tracking Wizard */}
-          <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 mb-5 flex items-center justify-between shrink-0">
+          <div className="bg-white/50 backdrop-blur-md border border-white/60 rounded-2xl p-3 mb-5 flex items-center justify-between shrink-0 shadow-[0_4px_15px_rgba(0,0,0,0.02)]">
             <div className="flex items-center gap-3">
-              <div className="relative flex items-center justify-center w-10 h-10 rounded-full bg-white shadow-sm border border-gray-200">
-                <Wifi className="w-5 h-5 text-green-500" />
-                <span className="absolute top-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full animate-pulse" />
+              <div className="relative flex items-center justify-center w-10 h-10 rounded-full bg-white/80 shadow-sm border border-white">
+                <Wifi className="w-5 h-5 text-emerald-500" />
+                <span className="absolute top-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full animate-pulse" />
               </div>
               <div className="flex flex-col">
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">ID Seguimiento</span>
-                <span className="text-sm font-bold text-gray-800">{animalData.tracking.deviceId}</span>
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">ID Seguimiento</span>
+                <span className="text-sm font-black text-slate-800">{animalData.tracking.deviceId}</span>
               </div>
             </div>
             <div className="flex gap-1">
-              <button onClick={() => setActiveModal('mapa')} className="p-2 bg-white rounded-lg border border-gray-200 text-gray-600 hover:text-[#e65100] hover:border-[#e65100] transition-colors"><MapPin className="w-4 h-4" /></button>
-              <button className="p-2 bg-white rounded-lg border border-gray-200 text-gray-600 hover:text-[#e65100] hover:border-[#e65100] transition-colors"><Settings className="w-4 h-4" /></button>
+              <button onClick={() => setActiveModal('mapa')} className="p-2 bg-white/60 backdrop-blur-sm rounded-xl border border-white/80 text-slate-600 hover:text-[#e65100] shadow-sm transition-all hover:scale-105"><MapPin className="w-4 h-4" /></button>
             </div>
           </div>
 
@@ -149,145 +262,121 @@ export default function App() {
               { l: "Edad", v: animalData.age }, { l: "Categoría", v: animalData.category },
               { l: "Lote", v: animalData.lot }, { l: "C. Corporal", v: animalData.bodyCondition },
             ].map((item, i) => (
-              <div key={i} className="flex flex-col border-b border-gray-100 pb-2">
-                <span className="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-0.5">{item.l}</span>
-                <span className="text-sm font-semibold text-gray-800">{item.v}</span>
+              <div key={i} className="flex flex-col bg-white/40 backdrop-blur-md border border-white/50 rounded-xl p-2.5 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                <span className="text-[9px] uppercase tracking-wider text-slate-500 font-bold mb-0.5">{item.l}</span>
+                <span className="text-xs font-black text-slate-800">{item.v}</span>
               </div>
             ))}
           </div>
 
-          {/* Genética Base */}
-          <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-4">
-            <h4 className="text-[10px] uppercase text-gray-500 font-bold mb-3 flex items-center gap-1"><Network className="w-3 h-3"/> Registro Genético</h4>
+          {/* Genética Base en Cabecera */}
+          <div className="bg-white/50 backdrop-blur-md border border-white/60 rounded-2xl p-4 mb-4 shadow-[0_4px_15px_rgba(0,0,0,0.02)]">
+            <h4 className="text-[10px] uppercase text-slate-500 font-bold mb-3 flex items-center gap-1"><Network className="w-3 h-3"/> Registro Genético</h4>
             <div className="flex flex-col gap-3 mb-4">
               <div className="flex items-center gap-3">
-                <span className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-gray-500 text-sm font-bold border border-gray-200 shadow-sm">♂</span>
-                <div className="flex flex-col"><span className="text-[10px] text-gray-400 font-bold uppercase">Padre</span><span className="text-sm font-bold text-gray-800">{animalData.genetics.father}</span></div>
+                <span className="w-8 h-8 rounded-full bg-white/80 flex items-center justify-center text-slate-500 text-sm font-bold border border-white shadow-sm">♂</span>
+                <div className="flex flex-col"><span className="text-[10px] text-slate-500 font-bold uppercase">Padre</span><span className="text-sm font-bold text-slate-800">{animalData.genetics.father}</span></div>
               </div>
               <div className="flex items-center gap-3">
-                <span className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-gray-500 text-sm font-bold border border-gray-200 shadow-sm">♀</span>
-                <div className="flex flex-col"><span className="text-[10px] text-gray-400 font-bold uppercase">Madre</span><span className="text-sm font-bold text-gray-800">{animalData.genetics.mother}</span></div>
+                <span className="w-8 h-8 rounded-full bg-white/80 flex items-center justify-center text-slate-500 text-sm font-bold border border-white shadow-sm">♀</span>
+                <div className="flex flex-col"><span className="text-[10px] text-slate-500 font-bold uppercase">Madre</span><span className="text-sm font-bold text-slate-800">{animalData.genetics.mother}</span></div>
               </div>
             </div>
-            <Button variant="secondary" className="w-full text-xs" onClick={() => setActiveModal('arbol')}>Ver Árbol Completo</Button>
+            <Button variant="secondary" className="w-full text-xs" onClick={() => setActiveModal('arbol')}>Árbol Genealógico</Button>
           </div>
 
-          <div className="mt-auto pt-4 flex flex-col gap-2 shrink-0 border-t border-gray-200">
-            <div className="flex gap-2">
-              <Button variant="secondary" className="flex-1"><Camera className="w-4 h-4" /> Foto</Button>
-              <Button variant="secondary" className="flex-1"><QrCode className="w-4 h-4" /> QR</Button>
-            </div>
-            <Button variant="danger" className="w-full" onClick={() => setActiveModal('baja')}><Skull className="w-4 h-4" /> Registrar Baja</Button>
+          <div className="mt-auto pt-4 flex flex-col gap-2 shrink-0 border-t border-white/50">
+            {!deathRecord && (
+              <Button variant="danger" className="w-full py-2.5" onClick={() => setActiveModal('baja')}><Skull className="w-4 h-4" /> Registrar Baja</Button>
+            )}
           </div>
         </div>
       </aside>
 
       {/* =========================================
-          PANEL CENTRAL: OPERACIONES (AJUSTE DINÁMICO 1 o 2 COLUMNAS)
+          PANEL CENTRAL: TARJETAS FULL-WIDTH (GLASS)
           ========================================= */}
-      <main className="flex-1 h-full overflow-y-auto p-6 lg:p-8 relative custom-scrollbar">
-        <div className="max-w-[1400px] mx-auto w-full space-y-6">
+      <main className="flex-1 h-full overflow-y-auto p-6 lg:p-8 relative custom-scrollbar z-10">
+        <div className="max-w-[1000px] mx-auto w-full space-y-6">
           
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-black text-gray-800 flex items-center gap-2">
+            <h2 className="text-3xl font-black text-slate-800 drop-shadow-sm flex items-center gap-2">
               Panel Operativo
             </h2>
           </div>
 
-          {/* LA MAGIA DEL GRID: Si la gráfica está cerrada, usa 2 columnas; si está abierta, usa 1 o 2 dependiendo del tamaño de pantalla */}
-          <div className={cn("grid gap-6 items-start", isGraphExpanded ? "grid-cols-1 2xl:grid-cols-2" : "grid-cols-1 lg:grid-cols-2")}>
+          <div className="flex flex-col gap-6 w-full">
 
-            {/* --- 1. EMBARAZO ACTIVO (SEPARADO Y DESTACADO) --- */}
-            <div className={cn("bg-white border border-[#ffcc80] rounded-2xl p-6 shadow-sm flex flex-col relative overflow-hidden", !isGraphExpanded && "lg:col-span-2")}>
-              <div className="absolute top-0 right-0 bg-[#fff3e0] text-[#e65100] text-[10px] font-bold px-4 py-1.5 rounded-bl-xl border-b border-l border-[#ffcc80] uppercase tracking-wider">
-                Gestación Activa
-              </div>
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2"><Baby className="w-5 h-5 text-[#e65100]" /> Seguimiento Actual</h3>
+            {/* --- 1. REPRODUCCIÓN Y GESTACIÓN ACTIVA --- */}
+            <div className="bg-white/50 backdrop-blur-2xl border border-white/60 rounded-[2rem] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.04)] flex flex-col w-full relative overflow-hidden">
+              <div className="flex justify-between items-center mb-6 border-b border-white/50 pb-4">
+                <h3 className="text-xl font-black text-slate-800 flex items-center gap-2"><Baby className="w-6 h-6 text-[#e65100]" /> Estado Reproductivo</h3>
+                <Button variant="secondary" className="text-xs" onClick={() => setActiveModal('historial_repro')}>
+                  <CalendarDays className="w-4 h-4" /> Historial de Preñeces
+                </Button>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative mb-6">
-                <div className="hidden md:block absolute top-6 left-16 right-16 h-0.5 bg-gray-200 z-0"></div>
-                <div className="relative z-10 flex flex-col items-center text-center bg-white">
-                  <div className="w-12 h-12 bg-green-50 rounded-full border-4 border-white flex items-center justify-center text-green-600 mb-2"><CheckCircle2 className="w-6 h-6" /></div>
-                  <p className="text-xs font-bold text-gray-800">Servicio / IA</p>
-                  <p className="text-[10px] text-gray-500">Padre: Toro #88</p>
-                </div>
-                <div className="relative z-10 flex flex-col items-center text-center bg-white">
-                  <div className="w-12 h-12 bg-[#fff3e0] rounded-full border-4 border-white flex items-center justify-center text-[#e65100] mb-2"><Stethoscope className="w-6 h-6" /></div>
-                  <p className="text-xs font-bold text-gray-800">Palpación</p>
-                  <p className="text-[10px] font-bold text-[#e65100]">Preñada (45d)</p>
-                </div>
-                <div className="relative z-10 flex flex-col items-center text-center bg-white">
-                  <div className="w-12 h-12 bg-gray-100 rounded-full border-4 border-white flex items-center justify-center text-gray-400 mb-2"><Baby className="w-5 h-5" /></div>
-                  <p className="text-xs font-bold text-gray-800">Parto (Estimado)</p>
-                  <p className="text-[10px] font-bold text-gray-600">20/06/2024</p>
-                </div>
-              </div>
-              <div className="flex gap-3 mt-auto">
-                <Button variant="secondary" className="flex-1" onClick={() => setActiveModal('palpacion')}><Stethoscope className="w-4 h-4" /> Palpación</Button>
-                <Button className="flex-1" onClick={() => setActiveModal('parto')}><Baby className="w-4 h-4" /> Registrar Parto</Button>
-              </div>
-            </div>
-
-            {/* --- 2. HISTORIAL DE REPRODUCCIÓN (PASADO) --- */}
-            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm flex flex-col h-full">
-              <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2 mb-4"><History className="w-4 h-4 text-gray-400" /> Historial de Preñeces</h3>
-              <div className="space-y-3 overflow-y-auto pr-2 flex-1 max-h-[250px] custom-scrollbar">
-                
-                {/* Hijo con Padre */}
-                <div className="p-4 rounded-xl border border-gray-100 bg-gray-50 flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <Badge variant="success">Parto Exitoso</Badge>
-                      <span className="text-xs font-bold text-gray-800">20/05/2022</span>
-                    </div>
-                    <p className="text-sm text-gray-700">Cría: <span className="font-bold">Macho #442</span></p>
-                    <p className="text-[10px] text-gray-500 uppercase mt-1">Padre de la cría: <span className="font-bold text-[#e65100]">Toro #992</span></p>
+              {activePregnancy ? (
+                <div className="bg-orange-100/40 backdrop-blur-md border border-orange-200/50 rounded-2xl p-6 relative shadow-inner">
+                  <div className="absolute top-0 right-0 bg-orange-200/60 backdrop-blur-md text-[#e65100] text-[10px] font-black px-4 py-2 rounded-bl-2xl rounded-tr-2xl border-b border-l border-white/50 uppercase tracking-wider">
+                    Gestación Activa
                   </div>
-                  <Button variant="ghost" className="p-2 h-auto"><ArrowRight className="w-4 h-4"/></Button>
-                </div>
-
-                {/* Aborto */}
-                <div className="p-4 rounded-xl border border-gray-100 bg-gray-50 flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <Badge variant="danger">Aborto</Badge>
-                      <span className="text-xs font-bold text-gray-800">05/06/2020</span>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative mt-4">
+                    <div className="hidden md:block absolute top-6 left-24 right-24 h-0.5 bg-orange-300/50 z-0"></div>
+                    <div className="relative z-10 flex flex-col items-center text-center">
+                      <div className="w-12 h-12 bg-white/80 backdrop-blur-sm rounded-full border-2 border-white flex items-center justify-center text-emerald-500 shadow-md mb-3"><CheckCircle2 className="w-6 h-6" /></div>
+                      <p className="text-xs font-bold text-slate-800">Servicio Confirmado</p>
+                      <p className="text-[10px] text-slate-500 font-medium">Padre: {activePregnancy.father}</p>
                     </div>
-                    <p className="text-sm text-gray-700">Interrupción a los 4 meses</p>
-                    <p className="text-[10px] text-gray-500 uppercase mt-1">Padre asignado: <span className="font-bold text-[#e65100]">Toro #15</span></p>
+                    <div className="relative z-10 flex flex-col items-center text-center">
+                      <div className="w-12 h-12 bg-orange-100/80 backdrop-blur-sm rounded-full border-2 border-white flex items-center justify-center text-[#e65100] shadow-md mb-3"><Stethoscope className="w-6 h-6" /></div>
+                      <p className="text-xs font-bold text-slate-800">Palpación</p>
+                      <p className="text-[10px] font-black text-[#e65100]">{activePregnancy.palpationResult}</p>
+                      <p className="text-[10px] text-slate-500 font-medium">{activePregnancy.palpationDate}</p>
+                    </div>
+                    <div className="relative z-10 flex flex-col items-center text-center">
+                      <div className="w-12 h-12 bg-white/60 backdrop-blur-sm rounded-full border-2 border-white flex items-center justify-center text-slate-400 shadow-md mb-3"><Baby className="w-5 h-5" /></div>
+                      <p className="text-xs font-bold text-slate-800">Parto Estimado</p>
+                      <p className="text-[10px] font-bold text-slate-600">{activePregnancy.projectedBirth}</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-4 mt-8">
+                    <Button variant="secondary" className="flex-1 border-dashed" onClick={() => setActiveModal('palpacion')} disabled={!!deathRecord}><Stethoscope className="w-4 h-4" /> Actualizar Palpación</Button>
+                    <Button className="flex-1 shadow-orange-500/40" onClick={() => setActiveModal('parto')} disabled={!!deathRecord}><Baby className="w-4 h-4" /> Confirmar Parto</Button>
                   </div>
                 </div>
-
-              </div>
+              ) : (
+                <div className="bg-white/40 backdrop-blur-sm border border-dashed border-white/80 rounded-2xl p-10 flex flex-col items-center justify-center text-center shadow-inner">
+                  <div className="w-16 h-16 bg-white/60 rounded-full flex items-center justify-center shadow-sm border border-white mb-4 text-slate-400">
+                    <AlertCircle className="w-8 h-8" />
+                  </div>
+                  <h4 className="text-slate-800 font-black text-xl mb-2">Sin Gestación Activa</h4>
+                  <p className="text-sm text-slate-500 mb-8 max-w-md font-medium">La vaca se encuentra actualmente vacía u horra. Registre un nuevo servicio o una palpación positiva para iniciar un nuevo ciclo.</p>
+                  <Button onClick={() => setActiveModal('palpacion')} disabled={!!deathRecord}><Stethoscope className="w-4 h-4"/> Registrar Servicio / Palpación</Button>
+                </div>
+              )}
             </div>
 
-            {/* --- 3. PLAN DE VACUNACIÓN (LÓGICA MULTIDOSIS) --- */}
-            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm flex flex-col h-full">
-              <div className="flex justify-between items-center mb-5">
-                <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2"><Syringe className="w-5 h-5 text-blue-500" /> Plan de Vacunación</h3>
-                <Button variant="secondary" className="text-xs py-1.5" onClick={() => setActiveModal('vacuna')}><Plus className="w-4 h-4"/> Agendar</Button>
+            {/* --- 2. PLAN DE VACUNACIÓN --- */}
+            <div className="bg-white/50 backdrop-blur-2xl border border-white/60 rounded-[2rem] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.04)] flex flex-col w-full">
+              <div className="flex justify-between items-center mb-5 border-b border-white/50 pb-4">
+                <h3 className="text-xl font-black text-slate-800 flex items-center gap-2"><Syringe className="w-6 h-6 text-blue-500" /> Plan de Vacunación</h3>
+                <Button variant="secondary" className="text-xs" onClick={() => setActiveModal('vacuna')} disabled={!!deathRecord}><Plus className="w-4 h-4"/> Nueva Vacuna</Button>
               </div>
-              <div className="flex-1 flex flex-col rounded-xl border border-gray-200 overflow-hidden">
-                <div className="grid grid-cols-12 gap-2 p-3 bg-gray-50 border-b border-gray-200">
-                  <div className="col-span-5 text-[10px] font-bold text-gray-500 uppercase">Vacuna / Dosis</div>
-                  <div className="col-span-3 text-[10px] font-bold text-gray-500 uppercase text-center">Planificado</div>
-                  <div className="col-span-4 text-[10px] font-bold text-gray-500 uppercase text-right">Estado</div>
+              <div className="flex-1 flex flex-col rounded-2xl border border-white/60 overflow-hidden bg-white/30 backdrop-blur-sm shadow-inner">
+                <div className="grid grid-cols-12 gap-2 p-4 bg-white/40 border-b border-white/50">
+                  <div className="col-span-5 text-[10px] font-black text-slate-500 uppercase tracking-wider">Vacuna / Dosis</div>
+                  <div className="col-span-3 text-[10px] font-black text-slate-500 uppercase tracking-wider text-center">Planificado</div>
+                  <div className="col-span-4 text-[10px] font-black text-slate-500 uppercase tracking-wider text-right">Estado</div>
                 </div>
-                <div className="flex-1 overflow-y-auto custom-scrollbar">
+                <div className="flex-1 overflow-y-auto">
                   {vaccines.map((v) => (
-                    <div key={v.id} className="grid grid-cols-12 gap-2 items-center p-3 border-b border-gray-100 last:border-0 bg-white hover:bg-gray-50">
-                      <div className="col-span-5">
-                        <p className="text-xs font-bold text-gray-800">{v.name}</p>
-                        <p className="text-[10px] text-gray-500">{v.dose}</p>
-                      </div>
-                      <div className="col-span-3 text-xs font-medium text-gray-600 text-center">{v.planned}</div>
+                    <div key={v.id} className="grid grid-cols-12 gap-2 items-center p-4 border-b border-white/40 last:border-0 hover:bg-white/50 transition-colors">
+                      <div className="col-span-5"><p className="text-sm font-bold text-slate-800">{v.name}</p><p className="text-[10px] font-semibold text-slate-500">{v.dose}</p></div>
+                      <div className="col-span-3 text-xs font-bold text-slate-600 text-center">{v.planned}</div>
                       <div className="col-span-4 flex justify-end">
                         {v.status === 'Pendiente' || v.status === 'Proyectado' ? (
-                          <button onClick={() => applyVaccine(v.id, v.name)} className="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-1 rounded hover:bg-blue-100 border border-blue-200 transition-colors">
-                            Aplicar
-                          </button>
+                          <button onClick={() => applyVaccine(v.id, v.name)} className="text-[10px] font-bold bg-blue-500/10 text-blue-700 px-3 py-1.5 rounded-lg hover:bg-blue-500/20 border border-blue-300/50 transition-colors shadow-sm active:scale-95" disabled={!!deathRecord}>Aplicar Dosis</button>
                         ) : (
                           <Badge variant={v.type}>{v.actual}</Badge>
                         )}
@@ -298,50 +387,55 @@ export default function App() {
               </div>
             </div>
 
-            {/* --- 4. CONTROL ANTIPARASITARIO --- */}
-            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm flex flex-col h-full">
-              <div className="flex justify-between items-center mb-5">
-                <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2"><Bug className="w-5 h-5 text-purple-500" /> Antiparasitario</h3>
-                <Button variant="secondary" className="text-xs py-1.5" onClick={() => setActiveModal('parasito')}><Plus className="w-4 h-4"/> Agendar</Button>
+            {/* --- 3. CONTROL ANTIPARASITARIO --- */}
+            <div className="bg-white/50 backdrop-blur-2xl border border-white/60 rounded-[2rem] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.04)] flex flex-col w-full">
+              <div className="flex justify-between items-center mb-5 border-b border-white/50 pb-4">
+                <h3 className="text-xl font-black text-slate-800 flex items-center gap-2"><Bug className="w-6 h-6 text-purple-500" /> Antiparasitario</h3>
+                <Button variant="secondary" className="text-xs" onClick={() => setActiveModal('parasito')} disabled={!!deathRecord}><Plus className="w-4 h-4"/> Nuevo Baño</Button>
               </div>
-              <div className="flex-1 flex flex-col rounded-xl border border-gray-200 overflow-hidden mb-4">
-                 <div className="grid grid-cols-12 gap-2 p-3 bg-gray-50 border-b border-gray-200">
-                  <div className="col-span-6 text-[10px] font-bold text-gray-500 uppercase">Tratamiento</div>
-                  <div className="col-span-3 text-[10px] font-bold text-gray-500 uppercase text-center">Planificado</div>
-                  <div className="col-span-3 text-[10px] font-bold text-gray-500 uppercase text-right">Estado</div>
+              <div className="flex flex-col rounded-2xl border border-white/60 overflow-hidden mb-5 bg-white/30 backdrop-blur-sm shadow-inner">
+                 <div className="grid grid-cols-12 gap-2 p-4 bg-white/40 border-b border-white/50">
+                  <div className="col-span-6 text-[10px] font-black text-slate-500 uppercase tracking-wider">Tratamiento</div>
+                  <div className="col-span-3 text-[10px] font-black text-slate-500 uppercase tracking-wider text-center">Planificado</div>
+                  <div className="col-span-3 text-[10px] font-black text-slate-500 uppercase tracking-wider text-right">Estado</div>
                 </div>
-                <div className="p-3 border-b border-gray-100 bg-white flex items-center">
-                   <div className="w-1/2"><p className="text-xs font-bold">Baño Aspersión</p><p className="text-[10px] text-gray-500">Amitraz</p></div>
-                   <div className="w-1/4 text-xs text-center text-gray-600">12/11/23</div>
-                   <div className="w-1/4 text-right"><Badge variant="success">Listo</Badge></div>
-                </div>
-                <div className="p-3 bg-white flex items-center">
-                   <div className="w-1/2"><p className="text-xs font-bold">Desparasitante</p><p className="text-[10px] text-gray-500">Ivermectina</p></div>
-                   <div className="w-1/4 text-xs text-center text-gray-600">01/05/24</div>
-                   <div className="w-1/4 text-right"><Badge variant="warning">Pendiente</Badge></div>
-                </div>
+                {parasites.map(p => (
+                  <div key={p.id} className="p-4 border-b border-white/40 last:border-0 flex items-center hover:bg-white/50 transition-colors">
+                    <div className="w-1/2"><p className="text-sm font-bold text-slate-800">{p.name}</p><p className="text-[10px] font-semibold text-slate-500">{p.product}</p></div>
+                    <div className="w-1/4 text-xs font-bold text-center text-slate-600">{p.planned}</div>
+                    <div className="w-1/4 flex justify-end">
+                      {p.status === 'Pendiente' ? (
+                        <button onClick={() => applyParasite(p.id, p.name)} className="text-[10px] font-bold bg-purple-500/10 text-purple-700 px-3 py-1.5 rounded-lg hover:bg-purple-500/20 border border-purple-300/50 transition-colors shadow-sm active:scale-95" disabled={!!deathRecord}>Aplicar</button>
+                      ) : (
+                        <Badge variant={p.type}>{p.status}</Badge>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
               <Button variant={bathRequested ? "secondary" : "primary"} className="w-full" onClick={() => setBathRequested(true)}>
-                {bathRequested ? "Orden Global Generada" : "Ejecutar Baño Inmediato"}
+                {bathRequested ? "Orden Global Generada" : "Solicitar Nuevo Baño"}
               </Button>
             </div>
 
-            {/* --- 5. BITÁCORA --- */}
-            <div className={cn("bg-white border border-gray-200 rounded-2xl p-6 shadow-sm flex flex-col", !isGraphExpanded && "lg:col-span-2")}>
-              <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2 mb-4"><MessageSquare className="w-5 h-5 text-gray-500" /> Bitácora de Novedades</h3>
+            {/* --- 4. BITÁCORA --- */}
+            <div className="bg-white/50 backdrop-blur-2xl border border-white/60 rounded-[2rem] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.04)] flex flex-col w-full">
+              <h3 className="text-xl font-black text-slate-800 flex items-center gap-2 mb-5 border-b border-white/50 pb-4"><MessageSquare className="w-6 h-6 text-slate-500" /> Bitácora de Novedades</h3>
               <div className="space-y-3 overflow-y-auto pr-2 custom-scrollbar min-h-[100px] flex-1">
-                <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
-                  <div className="flex justify-between items-start mb-1">
-                    <span className="text-xs font-bold text-[#e65100]">Dr. Ramírez</span>
-                    <span className="text-[10px] text-gray-500 flex items-center gap-1"><Clock className="w-3 h-3" /> 12/03/24</span>
+                {observations.map(obs => (
+                  <div key={obs.id} className="p-4 rounded-2xl bg-white/50 backdrop-blur-sm border border-white/60 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="text-xs font-black text-[#e65100] bg-orange-500/10 px-2 py-0.5 rounded-md border border-orange-200/50">{obs.author}</span>
+                      <span className="text-[10px] text-slate-500 font-bold flex items-center gap-1"><Clock className="w-3 h-3" /> {obs.date}</span>
+                    </div>
+                    <p className="text-sm font-medium text-slate-700">{obs.text}</p>
                   </div>
-                  <p className="text-sm text-gray-700">Revisión general en manga. Condición corporal óptima.</p>
-                </div>
+                ))}
               </div>
-              <div className="mt-4 pt-4 border-t border-gray-100 flex gap-2">
-                <input type="text" placeholder="Escribir observación..." className="flex-1 bg-white border border-gray-300 rounded-lg px-4 text-sm focus:border-[#e65100] outline-none" />
-                <Button className="px-4"><Plus className="w-4 h-4" /></Button>
-              </div>
+              <form onSubmit={handleAddObservation} className="mt-5 pt-5 border-t border-white/50 flex gap-3">
+                <input type="text" name="obsText" required placeholder="Escribir observación..." className="flex-1 bg-white/60 backdrop-blur-md border border-white/80 rounded-xl px-4 text-sm font-medium text-slate-800 focus:bg-white focus:border-[#e65100] outline-none shadow-inner transition-all placeholder:text-slate-400" />
+                <Button type="submit" className="px-5 shadow-orange-500/40"><Plus className="w-5 h-5" /></Button>
+              </form>
             </div>
 
           </div>
@@ -349,97 +443,90 @@ export default function App() {
       </main>
 
       {/* =========================================
-          PANEL DERECHO: GRÁFICOS (ALWAYS ON DISPLAY & COLLAPSABLE)
+          PANEL DERECHO: GRÁFICOS (GLASS)
           ========================================= */}
       <aside className={cn(
-        "h-full bg-white border-l border-gray-200 transition-all duration-300 ease-in-out flex flex-col shrink-0 z-20 shadow-xl relative",
-        isGraphExpanded ? "w-[360px] xl:w-[420px]" : "w-[60px]"
+        "h-full bg-white/40 backdrop-blur-2xl border-l border-white/60 transition-all duration-500 ease-in-out flex flex-col shrink-0 z-20 shadow-[-4px_0_24px_rgba(0,0,0,0.05)] relative",
+        isGraphExpanded ? "w-[360px] xl:w-[420px]" : "w-[70px]"
       )}>
-        <button 
-          onClick={() => setIsGraphExpanded(!isGraphExpanded)} 
-          className="absolute -left-4 top-8 w-8 h-12 bg-white border border-gray-200 rounded-l-xl flex items-center justify-center text-gray-400 hover:text-[#e65100] shadow-[-4px_0_10px_rgba(0,0,0,0.05)] z-30"
-        >
-          <ChevronRight className={cn("w-5 h-5 transition-transform", isGraphExpanded ? "" : "rotate-180")} />
+        <button onClick={() => setIsGraphExpanded(!isGraphExpanded)} className="absolute -left-5 top-10 w-10 h-14 bg-white/70 backdrop-blur-xl border border-white/80 rounded-l-2xl flex items-center justify-center text-slate-500 hover:text-[#e65100] shadow-[-4px_4px_15px_rgba(0,0,0,0.05)] z-30 transition-colors">
+          <ChevronRight className={cn("w-6 h-6 transition-transform duration-500", isGraphExpanded ? "" : "rotate-180")} />
         </button>
 
-        <div className={cn("flex-1 p-6 flex flex-col overflow-hidden transition-opacity duration-300", isGraphExpanded ? "opacity-100" : "opacity-0 invisible")}>
-          <h3 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2">
-            <Activity className="w-5 h-5 text-[#e65100]" /> Rendimiento (Leche)
-          </h3>
+        <div className={cn("flex-1 p-6 lg:p-8 flex flex-col overflow-hidden transition-opacity duration-300", isGraphExpanded ? "opacity-100" : "opacity-0 invisible")}>
+          <h3 className="text-xl font-black text-slate-800 mb-8 flex items-center gap-2"><Activity className="w-6 h-6 text-[#e65100]" /> Rendimiento (Leche)</h3>
           <div className="grid grid-cols-2 gap-4 mb-8">
-            <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-              <p className="text-[10px] font-bold text-gray-500 uppercase">Promedio</p>
-              <p className="text-3xl font-black text-gray-800 mt-1">20.8 <span className="text-xs font-semibold text-gray-500">L/d</span></p>
+            <div className="bg-white/50 backdrop-blur-md rounded-2xl p-5 border border-white/60 shadow-sm">
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Promedio</p>
+              <p className="text-4xl font-black text-slate-800 mt-2 drop-shadow-sm">20.8 <span className="text-sm font-bold text-slate-500">L/d</span></p>
             </div>
-            <div className="bg-[#fff3e0] rounded-xl p-4 border border-[#ffe0b2]">
-              <p className="text-[10px] font-bold text-[#e65100] uppercase">Pico</p>
-              <p className="text-3xl font-black text-[#e65100] mt-1">25.0 <span className="text-xs font-semibold text-[#e65100]/70">L/d</span></p>
+            <div className="bg-orange-100/40 backdrop-blur-md rounded-2xl p-5 border border-orange-200/50 shadow-sm">
+              <p className="text-[10px] font-black text-[#e65100] uppercase tracking-wider">Pico</p>
+              <p className="text-4xl font-black text-[#e65100] mt-2 drop-shadow-sm">25.0 <span className="text-sm font-bold text-[#e65100]/70">L/d</span></p>
             </div>
           </div>
-          <div className="flex-1 w-full min-h-[300px]">
+          <div className="flex-1 w-full min-h-[300px] bg-white/30 backdrop-blur-md rounded-3xl border border-white/50 p-4 shadow-inner">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={productionData} margin={{ top: 0, right: 0, left: -25, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorLiters" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#e65100" stopOpacity={0.3}/><stop offset="95%" stopColor="#e65100" stopOpacity={0}/></linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-                <XAxis dataKey="month" stroke="#9ca3af" fontSize={10} tickLine={false} axisLine={false} />
-                <YAxis stroke="#9ca3af" fontSize={10} tickLine={false} axisLine={false} />
-                <Tooltip contentStyle={{ borderRadius: '12px', fontSize: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                <Area type="monotone" dataKey="liters" stroke="#e65100" strokeWidth={3} fillOpacity={1} fill="url(#colorLiters)" />
+              <AreaChart data={productionData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                <defs><linearGradient id="colorLiters" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#e65100" stopOpacity={0.4}/><stop offset="95%" stopColor="#e65100" stopOpacity={0}/></linearGradient></defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.5)" vertical={false} />
+                <XAxis dataKey="month" stroke="#64748b" fontSize={11} fontFamily="font-bold" tickLine={false} axisLine={false} />
+                <YAxis stroke="#64748b" fontSize={11} fontFamily="font-bold" tickLine={false} axisLine={false} />
+                <Tooltip contentStyle={{ backgroundColor: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(12px)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.6)', boxShadow: '0 8px 32px rgba(0,0,0,0.08)', fontWeight: 'bold' }} />
+                <Area type="monotone" dataKey="liters" stroke="#e65100" strokeWidth={4} fillOpacity={1} fill="url(#colorLiters)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
-
-        {!isGraphExpanded && (
-          <div className="flex-1 flex justify-center pt-24">
-            <span className="whitespace-nowrap -rotate-90 text-xs font-bold text-gray-400 uppercase tracking-[0.2em] h-fit">Analíticas Ocultas</span>
-          </div>
-        )}
       </aside>
 
       {/* =========================================
-          SISTEMA DE MODALES / WIZARDS
+          SISTEMA DE MODALES WIZARD (GLASSMORPHISM)
           ========================================= */}
       <AnimatePresence>
         
-        {/* WIZARD: MAPA Y SEGUIMIENTO IOT */}
+        {/* WIZARD: HISTORIAL DE PREÑECES */}
+        {activeModal === 'historial_repro' && (
+          <GenericFormModal title="Historial de Gestaciones" icon={CalendarDays} onClose={closeModal}>
+             <div className="space-y-4">
+                {pregnancyHistory.map((preg) => (
+                  <div key={preg.id} className="p-5 rounded-2xl border border-white/60 bg-white/50 backdrop-blur-sm shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center gap-3 mb-2">
+                        <Badge variant={preg.status.includes('Exitoso') ? 'success' : 'danger'}>{preg.status}</Badge>
+                        <span className="text-xs font-bold text-slate-700">Cierre: {preg.endDate}</span>
+                      </div>
+                      <p className="text-sm text-slate-800 font-black">{preg.resultDetail}</p>
+                      <p className="text-[10px] text-slate-500 font-bold uppercase mt-1 tracking-wider">Servicio: {preg.serviceDate} | Padre: <span className="font-black text-[#e65100]">{preg.father}</span></p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+          </GenericFormModal>
+        )}
+
+        {/* WIZARD: MAPA IOT */}
         {activeModal === 'mapa' && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" onClick={closeModal} />
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} 
-              className="relative w-full max-w-4xl h-[80vh] bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-white z-10">
-                <div>
-                  <h2 className="text-lg font-bold text-gray-800">Ubicación GPS: {animalData.tracking.deviceId}</h2>
-                  <p className="text-xs text-gray-500">Visualización en tiempo real</p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <label className="flex items-center gap-2 cursor-pointer bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200">
-                    <input type="checkbox" checked={showAllHerd} onChange={(e) => setShowAllHerd(e.target.checked)} className="accent-[#e65100] w-4 h-4" />
-                    <span className="text-xs font-bold text-gray-600">Ver todo el rebaño</span>
-                  </label>
-                  <button onClick={closeModal} className="p-2 bg-gray-100 rounded-full text-gray-500"><X className="w-5 h-5" /></button>
-                </div>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-900/40 backdrop-blur-md" onClick={closeModal} />
+            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} 
+              className="relative w-full max-w-4xl h-[80vh] bg-white/70 backdrop-blur-2xl rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden border border-white/60">
+              <div className="px-6 py-5 border-b border-white/50 flex justify-between items-center bg-white/40 z-10">
+                <div><h2 className="text-lg font-black text-slate-800">Ubicación GPS: {animalData.tracking.deviceId}</h2></div>
+                <button onClick={closeModal} className="p-2 bg-white/60 border border-white/80 rounded-full text-slate-600 shadow-sm"><X className="w-5 h-5" /></button>
               </div>
-              <div className="flex-1 bg-[#eef2f5] p-6 relative">
+              <div className="flex-1 bg-slate-100/40 p-6 relative">
                 <div className="absolute inset-6 grid grid-cols-2 grid-rows-2 gap-4">
                   {['Potrero 1', 'Potrero 2', 'Potrero 3', 'Potrero 4'].map((p, i) => (
-                    <div key={i} className="bg-[#dce5df] border-2 border-[#b5cbbd] rounded-3xl relative overflow-hidden">
-                      <span className="absolute bottom-4 left-4 text-sm font-black text-gray-400 opacity-50 uppercase tracking-widest">{p}</span>
-                      {p === animalData.tracking.location && !showAllHerd && (
-                        <motion.div className="absolute w-6 h-6 bg-[#e65100] rounded-full border-2 border-white shadow-lg z-20 flex items-center justify-center"
+                    <div key={i} className="bg-emerald-100/30 backdrop-blur-sm border-2 border-emerald-200/50 rounded-3xl relative overflow-hidden shadow-inner">
+                      <span className="absolute bottom-4 left-4 text-sm font-black text-emerald-800 opacity-30 uppercase tracking-widest">{p}</span>
+                      {p === animalData.tracking.location && (
+                        <motion.div className="absolute w-6 h-6 bg-[#e65100] rounded-full border-2 border-white shadow-[0_0_15px_rgba(230,81,0,0.5)] z-20 flex items-center justify-center"
                           initial={{ left: '50%', top: '50%' }} animate={{ x: [0, 20, -10, 0], y: [0, -15, 10, 0] }} transition={{ duration: 10, repeat: Infinity }}
                         >
-                           <div className="absolute -top-8 bg-gray-800 text-white text-[10px] font-bold px-2 py-1 rounded">{animalData.id}</div>
+                           <div className="absolute -top-8 bg-slate-800/90 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1 rounded-lg border border-white/20">{animalData.id}</div>
                         </motion.div>
                       )}
-                      {showAllHerd && mockHerd.filter(v => v.potrero === p).map((v) => (
-                        <motion.div key={v.id} className={cn("absolute rounded-full border border-white", v.id === animalData.id ? "bg-[#e65100] w-4 h-4 z-20" : "bg-gray-500 w-3 h-3")}
-                          style={{ left: `${v.x}%`, top: `${v.y}%` }} animate={{ x: [0, Math.random() * 20 - 10, 0], y: [0, Math.random() * 20 - 10, 0] }} transition={{ duration: 15, repeat: Infinity }}
-                        />
-                      ))}
                     </div>
                   ))}
                 </div>
@@ -448,70 +535,90 @@ export default function App() {
           </div>
         )}
 
-        {/* MODAL: FORMULARIO PALPACIÓN */}
+        {/* WIZARD: REGISTRO DE BAJA */}
+        {activeModal === 'baja' && (
+          <GenericFormModal title="Registrar Baja de Animal" icon={Skull} onClose={closeModal}>
+            <form onSubmit={handleDeathRegistration} className="space-y-4">
+                <div><label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-2">Motivo</label><select name="cause" required className="w-full bg-white/60 backdrop-blur-md border border-white/80 rounded-xl py-3.5 px-4 text-sm font-bold focus:border-red-500 focus:ring-2 focus:ring-red-500/20 outline-none text-slate-800 shadow-inner"><option value="Enfermedad Infecciosa">Enfermedad Infecciosa</option><option value="Accidente">Accidente / Traumatismo</option></select></div>
+                <div><label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-2">Observaciones</label><textarea name="obs" required rows={3} className="w-full bg-white/60 backdrop-blur-md border border-white/80 rounded-xl py-3.5 px-4 text-sm font-bold focus:border-red-500 focus:ring-2 focus:ring-red-500/20 outline-none resize-none text-slate-800 shadow-inner"></textarea></div>
+                <Button type="submit" variant="danger" className="w-full mt-2 py-3 shadow-red-500/40">Confirmar Baja</Button>
+            </form>
+          </GenericFormModal>
+        )}
+
+        {/* WIZARD: PALPACIÓN */}
         {activeModal === 'palpacion' && (
           <GenericFormModal title="Registrar Palpación" icon={Stethoscope} onClose={closeModal}>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2 md:col-span-1"><label className="block text-xs font-bold text-gray-500 mb-1">Fecha</label><input type="date" className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 focus:border-[#e65100] outline-none text-sm" /></div>
-              <div className="col-span-2 md:col-span-1"><label className="block text-xs font-bold text-gray-500 mb-1">Diagnóstico</label><select className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 focus:border-[#e65100] outline-none text-sm"><option>Preñada</option><option>Vacía</option></select></div>
-              <div className="col-span-2"><label className="block text-xs font-bold text-gray-500 mb-1">Observaciones</label><textarea rows={2} className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 focus:border-[#e65100] outline-none text-sm resize-none"></textarea></div>
-            </div>
-            <Button className="w-full mt-6" onClick={closeModal}>Guardar</Button>
+            <form onSubmit={handlePalpacion}>
+              <div className="grid grid-cols-2 gap-5">
+                <div className="col-span-2 md:col-span-1"><label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-2">Diagnóstico</label><select name="diagnostico" className="w-full bg-white/60 backdrop-blur-md border border-white/80 rounded-xl py-3.5 px-4 focus:border-[#e65100] focus:ring-2 focus:ring-[#e65100]/20 outline-none text-sm font-bold text-slate-800 shadow-inner"><option>Preñada</option><option>Vacía</option></select></div>
+                <div className="col-span-2 md:col-span-1"><label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-2">Observaciones</label><input type="text" name="obs" className="w-full bg-white/60 backdrop-blur-md border border-white/80 rounded-xl py-3.5 px-4 focus:border-[#e65100] focus:ring-2 focus:ring-[#e65100]/20 outline-none text-sm font-bold text-slate-800 shadow-inner" /></div>
+              </div>
+              <Button type="submit" className="w-full mt-8 py-3">Guardar Resultado</Button>
+            </form>
           </GenericFormModal>
         )}
 
-        {/* MODAL: FORMULARIO PARTO */}
+        {/* WIZARD: PARTO */}
         {activeModal === 'parto' && (
           <GenericFormModal title="Registrar Parto" icon={Baby} onClose={closeModal}>
-             <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2"><label className="block text-xs font-bold text-gray-500 mb-1">Sexo de la Cría</label><select className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 focus:border-[#e65100] outline-none text-sm"><option>Macho</option><option>Hembra</option></select></div>
-              <div className="col-span-2 md:col-span-1"><label className="block text-xs font-bold text-gray-500 mb-1">Peso (Kg)</label><input type="number" className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 focus:border-[#e65100] outline-none text-sm" /></div>
-              <div className="col-span-2 md:col-span-1"><label className="block text-xs font-bold text-gray-500 mb-1">Estado</label><select className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 focus:border-[#e65100] outline-none text-sm"><option>Vivo</option><option>Muerto</option></select></div>
-            </div>
-            <Button className="w-full mt-6" onClick={closeModal}>Generar Arete Hijo</Button>
+            <form onSubmit={handleParto}>
+              <div className="grid grid-cols-2 gap-5">
+                <div className="col-span-2"><label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-2">Sexo de la Cría</label><select name="sexo" className="w-full bg-white/60 backdrop-blur-md border border-white/80 rounded-xl py-3.5 px-4 focus:border-[#e65100] focus:ring-2 focus:ring-[#e65100]/20 outline-none text-sm font-bold text-slate-800 shadow-inner"><option>Macho</option><option>Hembra</option></select></div>
+                <div className="col-span-2 md:col-span-1"><label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-2">Peso (Kg)</label><input type="number" name="peso" defaultValue={35} className="w-full bg-white/60 backdrop-blur-md border border-white/80 rounded-xl py-3.5 px-4 focus:border-[#e65100] focus:ring-2 focus:ring-[#e65100]/20 outline-none text-sm font-bold text-slate-800 shadow-inner" /></div>
+                <div className="col-span-2 md:col-span-1"><label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-2">Estado</label><select name="estado" className="w-full bg-white/60 backdrop-blur-md border border-white/80 rounded-xl py-3.5 px-4 focus:border-[#e65100] focus:ring-2 focus:ring-[#e65100]/20 outline-none text-sm font-bold text-slate-800 shadow-inner"><option>Vivo</option><option>Muerto</option></select></div>
+              </div>
+              <Button type="submit" className="w-full mt-8 py-3">Confirmar Parto y Generar Arete</Button>
+            </form>
           </GenericFormModal>
         )}
 
-        {/* MODAL: ÁRBOL GENEALÓGICO */}
+        {/* WIZARD: NUEVA VACUNA */}
+        {activeModal === 'vacuna' && (
+          <GenericFormModal title="Nueva Vacuna" icon={Syringe} onClose={closeModal}>
+            <div className="space-y-5">
+              <div><label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-2">Tipo de Vacuna</label><input type="text" className="w-full bg-white/60 backdrop-blur-md border border-white/80 rounded-xl py-3.5 px-4 focus:border-[#e65100] focus:ring-2 focus:ring-[#e65100]/20 outline-none text-sm font-bold text-slate-800 shadow-inner" placeholder="Ej. Brucelosis" /></div>
+              <div><label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-2">Fecha Programada</label><input type="date" className="w-full bg-white/60 backdrop-blur-md border border-white/80 rounded-xl py-3.5 px-4 focus:border-[#e65100] focus:ring-2 focus:ring-[#e65100]/20 outline-none text-sm font-bold text-slate-800 shadow-inner" /></div>
+              <Button className="w-full mt-4 py-3" onClick={closeModal}>Agendar Vacuna</Button>
+            </div>
+          </GenericFormModal>
+        )}
+
+        {/* WIZARD: NUEVO ANTIPARASITARIO */}
+        {activeModal === 'parasito' && (
+          <GenericFormModal title="Nuevo Control Antiparasitario" icon={Bug} onClose={closeModal}>
+            <div className="space-y-5">
+              <div><label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-2">Tratamiento / Método</label><input type="text" className="w-full bg-white/60 backdrop-blur-md border border-white/80 rounded-xl py-3.5 px-4 focus:border-[#e65100] focus:ring-2 focus:ring-[#e65100]/20 outline-none text-sm font-bold text-slate-800 shadow-inner" placeholder="Ej. Baño de inmersión" /></div>
+              <div><label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-2">Producto</label><input type="text" className="w-full bg-white/60 backdrop-blur-md border border-white/80 rounded-xl py-3.5 px-4 focus:border-[#e65100] focus:ring-2 focus:ring-[#e65100]/20 outline-none text-sm font-bold text-slate-800 shadow-inner" placeholder="Ej. Ivermectina" /></div>
+              <Button className="w-full mt-4 py-3" onClick={closeModal}>Agendar Tratamiento</Button>
+            </div>
+          </GenericFormModal>
+        )}
+
+        {/* WIZARD: ÁRBOL GENEALÓGICO */}
         {activeModal === 'arbol' && (
           <GenericFormModal title="Árbol Genealógico" icon={Network} onClose={closeModal}>
             <div className="flex flex-col items-center py-6 gap-6">
-              {/* Padres */}
               <div className="flex gap-10">
-                <div className="border border-gray-200 p-3 rounded-xl text-center shadow-sm w-36"><p className="text-[10px] text-gray-400 uppercase font-bold">Padre</p><p className="text-sm font-bold">{animalData.genetics.father}</p></div>
-                <div className="border border-gray-200 p-3 rounded-xl text-center shadow-sm w-36"><p className="text-[10px] text-gray-400 uppercase font-bold">Madre</p><p className="text-sm font-bold">{animalData.genetics.mother}</p></div>
+                <div className="bg-white/60 backdrop-blur-md border border-white/80 p-4 rounded-2xl text-center shadow-sm w-40"><p className="text-[10px] text-slate-500 uppercase font-black tracking-wider">Padre</p><p className="text-sm font-black text-slate-800 mt-1">{animalData.genetics.father}</p></div>
+                <div className="bg-white/60 backdrop-blur-md border border-white/80 p-4 rounded-2xl text-center shadow-sm w-40"><p className="text-[10px] text-slate-500 uppercase font-black tracking-wider">Madre</p><p className="text-sm font-black text-slate-800 mt-1">{animalData.genetics.mother}</p></div>
               </div>
-              <div className="w-px h-8 bg-gray-300"></div>
-              {/* Animal */}
-              <div className="bg-[#e65100] text-white p-4 rounded-xl text-center shadow-md w-48 border-2 border-[#ffcc80]"><p className="text-[10px] uppercase font-bold text-white/80">Animal Actual</p><h3 className="text-2xl font-black">{animalData.id}</h3></div>
-              <div className="w-px h-8 bg-gray-300"></div>
-              {/* Hijos */}
-              <div className="flex gap-6">
-                 <div className="border border-green-200 bg-green-50 p-3 rounded-xl text-center shadow-sm w-36"><p className="text-[10px] text-green-600 uppercase font-bold">Hijo</p><p className="text-sm font-bold">Macho #442</p></div>
-                 <div className="border border-yellow-200 bg-yellow-50 p-3 rounded-xl text-center shadow-sm w-36"><p className="text-[10px] text-yellow-600 uppercase font-bold">En Gestación</p><p className="text-sm font-bold">Jun 2024</p></div>
+              <div className="w-px h-10 bg-slate-300"></div>
+              <div className="bg-gradient-to-br from-[#e65100] to-[#ff7043] text-white p-5 rounded-2xl text-center shadow-lg w-52 border border-orange-300/50"><p className="text-[10px] uppercase font-black text-white/80 tracking-widest">Animal Actual</p><h3 className="text-3xl font-black mt-1 drop-shadow-md">{animalData.id}</h3></div>
+              <div className="w-px h-10 bg-slate-300"></div>
+              <div className="flex flex-wrap justify-center gap-6">
+                 {descendants.map((d, i) => (
+                   <div key={i} className="border border-emerald-300/50 bg-emerald-50/50 backdrop-blur-md p-4 rounded-2xl text-center shadow-sm w-40"><p className="text-[10px] text-emerald-700 uppercase font-black tracking-wider">Hijo ({d.date})</p><p className="text-sm font-black text-slate-800 mt-1">{d.id}</p></div>
+                 ))}
+                 {activePregnancy && (
+                   <div className="border border-orange-300/50 bg-orange-50/50 backdrop-blur-md p-4 rounded-2xl text-center shadow-sm w-40"><p className="text-[10px] text-[#e65100] uppercase font-black tracking-wider">En Gestación</p><p className="text-sm font-black text-slate-800 mt-1">{activePregnancy.projectedBirth}</p></div>
+                 )}
               </div>
             </div>
           </GenericFormModal>
         )}
 
       </AnimatePresence>
-    </div>
-  );
-}
-
-// Componente Wrapper para Formularios
-function GenericFormModal({ children, title, icon: Icon, onClose }: any) {
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" onClick={onClose} />
-      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} 
-        className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
-        <div className="bg-gray-50 p-5 flex items-center justify-between border-b border-gray-200">
-          <div className="flex items-center gap-3 text-gray-800"><div className="p-2 bg-white rounded-lg shadow-sm border border-gray-200"><Icon className="w-5 h-5 text-[#e65100]" /></div><h2 className="text-lg font-bold">{title}</h2></div>
-          <button onClick={onClose} className="p-2 bg-white border border-gray-200 rounded-full text-gray-500"><X className="w-4 h-4" /></button>
-        </div>
-        <div className="p-6 overflow-y-auto custom-scrollbar">{children}</div>
-      </motion.div>
     </div>
   );
 }
