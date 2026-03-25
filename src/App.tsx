@@ -4,7 +4,7 @@ import {
   MessageSquare, Baby, CheckCircle2, Clock, X, 
   ChevronRight, Stethoscope, Wifi, MapPin, Network, 
   Settings, Plus, ArrowRight, AlertCircle, CalendarDays,
-  ArrowLeft, Search, Filter, List
+  ArrowLeft, Search, Filter, LayoutGrid
 } from 'lucide-react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
@@ -30,10 +30,11 @@ const animalData = {
 };
 
 const initialInventory = [
-  { id: "#333018", name: "Corazón", category: "Vaca", breed: "Carora-Jersey", lot: "Lote Alta Producción", paddock: "Potrero 4", status: "Activa", type: "success", photo: "https://images.unsplash.com/photo-1570042225831-d98fa7577f1e?q=80&w=2070&auto=format&fit=crop" },
-  { id: "#42125", name: "Pinto", category: "Becerro", breed: "Holstein", lot: "Levante", paddock: "Potrero 2", status: "Activo", type: "success", photo: "https://images.unsplash.com/photo-1596733430284-f7437764b1a9?q=80&w=2070&auto=format&fit=crop" },
-  { id: "#53823", name: "Gyr", category: "Mauta", breed: "Gyr", lot: "Desarrollo", paddock: "Potrero 3", status: "Activa", type: "success", photo: "https://images.unsplash.com/photo-1545468800-85cc9bc6ecf7?q=80&w=2070&auto=format&fit=crop" },
-  { id: "#04024", name: "Soncola", category: "Becerra", breed: "Holstein", lot: "Enfermería", paddock: "Corral 1", status: "Baja", type: "danger", photo: "https://images.unsplash.com/photo-1629548482613-2d216d68b6b6?q=80&w=2070&auto=format&fit=crop" },
+  { id: "#333018", name: "Corazón", category: "Vaca", breed: "Carora-Jersey", sex: "Hembra", age: "4 años", lot: "Lote Alta Producción", paddock: "Potrero 4", status: "Activa", type: "success", bodyCondition: "3.5", reproStatus: "Preñada (45d)", tracking: true, photo: "https://images.unsplash.com/photo-1570042225831-d98fa7577f1e?q=80&w=2070&auto=format&fit=crop" },
+  { id: "#42125", name: "Pinto", category: "Becerro", breed: "Holstein", sex: "Macho", age: "6 meses", lot: "Levante", paddock: "Potrero 2", status: "Activo", type: "success", bodyCondition: "2.8", reproStatus: "N/A", tracking: false, photo: "https://images.unsplash.com/photo-1596733430284-f7437764b1a9?q=80&w=2070&auto=format&fit=crop" },
+  { id: "#53823", name: "Gyr", category: "Mauta", breed: "Gyr", sex: "Hembra", age: "18 meses", lot: "Desarrollo", paddock: "Potrero 3", status: "Activa", type: "success", bodyCondition: "3.0", reproStatus: "Vacía", tracking: true, photo: "https://images.unsplash.com/photo-1545468800-85cc9bc6ecf7?q=80&w=2070&auto=format&fit=crop" },
+  { id: "#04024", name: "Soncola", category: "Becerra", breed: "Holstein", sex: "Hembra", age: "2 meses", lot: "Enfermería", paddock: "Corral 1", status: "En Tratamiento", type: "warning", bodyCondition: "2.0", reproStatus: "N/A", tracking: false, photo: "https://images.unsplash.com/photo-1629548482613-2d216d68b6b6?q=80&w=2070&auto=format&fit=crop" },
+  { id: "#99201", name: "Relámpago", category: "Toro", breed: "Carora Puro", sex: "Macho", age: "5 años", lot: "Reproductores", paddock: "Potrero 1", status: "Activo", type: "success", bodyCondition: "4.0", reproStatus: "Reproductor", tracking: true, photo: "https://images.unsplash.com/photo-1596733430284-f7437764b1a9?q=80&w=2070&auto=format&fit=crop" },
 ];
 
 const productionData = [
@@ -149,10 +150,15 @@ export default function App() {
       name: formData.get('nombre') as string || "Sin Nombre",
       category: formData.get('categoria') as string,
       breed: formData.get('raza') as string,
+      sex: formData.get('sexo') as string,
+      age: "Recién Ingresado",
       lot: formData.get('lote') as string,
       paddock: formData.get('potrero') as string,
       status: "Activo",
       type: "success",
+      bodyCondition: formData.get('cc') as string || "3.0",
+      reproStatus: formData.get('sexo') === 'Macho' ? 'N/A' : 'Vacía',
+      tracking: false,
       photo: "https://images.unsplash.com/photo-1545468800-85cc9bc6ecf7?q=80&w=2070&auto=format&fit=crop"
     };
     setInventory([newAnimal, ...inventory]);
@@ -191,16 +197,21 @@ export default function App() {
     if(isAlive) {
       setDescendants([...descendants, { id: newAreteId, date: new Date().getFullYear().toString(), status: "Cría Nueva", type: "success" }]);
       
-      // *** SINCRONIZACIÓN MÁGICA CON EL INVENTARIO GLOBAL ***
+      // SINCRONIZACIÓN MÁGICA CON EL INVENTARIO GLOBAL
       setInventory([{
         id: newAreteId,
         name: `Cría de ${animalData.id}`,
         category: sexo === 'Macho' ? 'Becerro' : 'Becerra',
         breed: animalData.breed,
+        sex: sexo,
+        age: "0 Días",
         lot: "Maternidad",
         paddock: animalData.paddock,
         status: "Activo",
         type: "success",
+        bodyCondition: "N/A",
+        reproStatus: "N/A",
+        tracking: false,
         photo: "https://images.unsplash.com/photo-1596733430284-f7437764b1a9?q=80&w=2070&auto=format&fit=crop"
       }, ...inventory]);
     }
@@ -252,17 +263,19 @@ export default function App() {
   };
 
   // =========================================
-  // RENDER: VISTA DE LISTADO (INVENTARIO)
+  // RENDER: VISTA DE LISTADO (INVENTARIO DATA GRID)
   // =========================================
   const renderListView = () => (
-    <div className="flex-1 h-full overflow-y-auto p-6 lg:p-10 relative custom-scrollbar z-10">
-      <div className="max-w-[1200px] mx-auto space-y-6">
+    <div className="flex-1 h-full overflow-y-auto p-4 lg:p-8 relative custom-scrollbar z-10">
+      <div className="max-w-[1400px] mx-auto space-y-6">
         
         {/* Header del Inventario */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white/40 backdrop-blur-2xl border border-white/60 p-6 lg:p-8 rounded-[2rem] shadow-[0_8px_32px_rgba(0,0,0,0.04)]">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white/40 backdrop-blur-2xl border border-white/60 p-6 rounded-[2rem] shadow-[0_8px_32px_rgba(0,0,0,0.04)]">
           <div>
-            <h1 className="text-3xl font-black text-slate-800 drop-shadow-sm">Inventario General</h1>
-            <p className="text-sm font-medium text-slate-600 mt-1">Gestión y control de rebaño ({inventory.length} animales registrados)</p>
+            <h1 className="text-3xl font-black text-slate-800 drop-shadow-sm flex items-center gap-3">
+              <LayoutGrid className="w-8 h-8 text-[#e65100]" /> Inventario Global
+            </h1>
+            <p className="text-sm font-medium text-slate-600 mt-1">Gestión y control de rebaño ({inventory.length} animales registrados en la finca)</p>
           </div>
           <Button onClick={() => setActiveModal('nuevo_animal')} className="shadow-orange-500/40 py-3 px-6 whitespace-nowrap">
             <Plus className="w-5 h-5" /> Registrar Animal
@@ -273,48 +286,79 @@ export default function App() {
         <div className="flex gap-4">
           <div className="flex-1 relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-            <input type="text" placeholder="Buscar por arete, nombre, raza o potrero..." className="w-full bg-white/50 backdrop-blur-xl border border-white/60 rounded-2xl py-4 pl-12 pr-4 text-sm font-bold text-slate-800 focus:border-[#e65100] outline-none shadow-inner transition-colors" />
+            <input type="text" placeholder="Buscar por arete, nombre, raza, categoría o potrero..." className="w-full bg-white/50 backdrop-blur-xl border border-white/60 rounded-2xl py-4 pl-12 pr-4 text-sm font-bold text-slate-800 focus:border-[#e65100] outline-none shadow-inner transition-colors" />
           </div>
-          <Button variant="secondary" className="px-6 hidden sm:flex"><Filter className="w-5 h-5" /> Filtrar</Button>
+          <Button variant="secondary" className="px-6 hidden sm:flex"><Filter className="w-5 h-5" /> Filtros Avanzados</Button>
         </div>
 
-        {/* Tabla de Datos Glassmorphism */}
+        {/* Tabla de Datos Glassmorphism - Data Grid Expandido */}
         <div className="bg-white/50 backdrop-blur-2xl border border-white/60 rounded-[2rem] shadow-[0_8px_32px_rgba(0,0,0,0.04)] overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[800px]">
+          <div className="overflow-x-auto custom-scrollbar">
+            <table className="w-full text-left border-collapse min-w-[1000px]">
               <thead>
                 <tr className="bg-white/40 border-b border-white/50">
-                  <th className="p-5 text-[10px] font-black text-slate-500 uppercase tracking-wider">Identificación</th>
-                  <th className="p-5 text-[10px] font-black text-slate-500 uppercase tracking-wider">Categoría / Raza</th>
-                  <th className="p-5 text-[10px] font-black text-slate-500 uppercase tracking-wider">Ubicación Física</th>
-                  <th className="p-5 text-[10px] font-black text-slate-500 uppercase tracking-wider">Estado</th>
-                  <th className="p-5 text-[10px] font-black text-slate-500 uppercase tracking-wider text-right">Acción</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-wider">Identificación</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-wider">Clasificación</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-wider">Ubicación & IoT</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-wider">Salud & Físico</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-wider">Reproductivo</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-wider text-right">Acción</th>
                 </tr>
               </thead>
               <tbody>
                 {inventory.map(animal => (
                   <tr key={animal.id} className="border-b border-white/30 hover:bg-white/60 transition-colors cursor-pointer group" onClick={() => setCurrentView('detail')}>
-                    <td className="p-5">
+                    {/* Identificación */}
+                    <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
                         <img src={animal.photo} className="w-12 h-12 rounded-xl object-cover border border-white/80 shadow-sm" alt={animal.name} />
                         <div>
-                          <p className="text-sm font-black text-slate-800 group-hover:text-[#e65100] transition-colors">{animal.id}</p>
+                          <p className="text-sm font-black text-slate-800 group-hover:text-[#e65100] transition-colors flex items-center gap-1">
+                            {animal.id} 
+                            <span className="text-[10px] font-bold text-slate-400">{animal.sex === 'Macho' ? '♂' : '♀'}</span>
+                          </p>
                           <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{animal.name}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="p-5">
+                    {/* Clasificación */}
+                    <td className="px-6 py-4">
                       <p className="text-sm font-bold text-slate-700">{animal.category}</p>
-                      <p className="text-[10px] font-semibold text-slate-500">{animal.breed}</p>
+                      <p className="text-[10px] font-semibold text-slate-500">{animal.breed} • {animal.age}</p>
                     </td>
-                    <td className="p-5">
+                    {/* Ubicación & IoT */}
+                    <td className="px-6 py-4">
                       <p className="text-sm font-bold text-slate-700">{animal.lot}</p>
-                      <p className="text-[10px] font-semibold text-slate-500">{animal.paddock}</p>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <MapPin className="w-3 h-3 text-slate-400" />
+                        <p className="text-[10px] font-semibold text-slate-500">{animal.paddock}</p>
+                        {animal.tracking && (
+                          <div className="flex items-center gap-1 ml-2 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">
+                            <Wifi className="w-2.5 h-2.5 text-emerald-500" />
+                            <span className="text-[8px] font-bold text-emerald-600 uppercase">GPS Activo</span>
+                          </div>
+                        )}
+                      </div>
                     </td>
-                    <td className="p-5">
-                      <Badge variant={animal.type}>{animal.status}</Badge>
+                    {/* Salud & Físico */}
+                    <td className="px-6 py-4">
+                      <Badge variant={animal.type} className="mb-1">{animal.status}</Badge>
+                      <p className="text-[10px] font-bold text-slate-500">C.C: <span className="text-slate-700">{animal.bodyCondition}</span> / 5.0</p>
                     </td>
-                    <td className="p-5 text-right">
+                    {/* Reproductivo */}
+                    <td className="px-6 py-4">
+                      {animal.reproStatus !== 'N/A' ? (
+                        <div className="flex flex-col">
+                          <span className={cn("text-xs font-bold", animal.reproStatus.includes('Preñada') ? "text-[#e65100]" : "text-slate-600")}>
+                            {animal.reproStatus}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-[10px] font-bold text-slate-400 uppercase">No Aplica</span>
+                      )}
+                    </td>
+                    {/* Acción */}
+                    <td className="px-6 py-4 text-right">
                       <button className="p-2.5 bg-white/60 border border-white/80 rounded-xl text-slate-500 group-hover:text-[#e65100] group-hover:border-[#e65100]/30 transition-all shadow-sm" onClick={(e) => { e.stopPropagation(); setCurrentView('detail'); }}>
                         <ArrowRight className="w-4 h-4" />
                       </button>
@@ -330,13 +374,13 @@ export default function App() {
   );
 
   // =========================================
-  // RENDER: VISTA DETALLE (INTACTA SEGÚN INSTRUCCIÓN)
+  // RENDER: VISTA DETALLE (INTACTA)
   // =========================================
   const renderDetailView = () => (
     <>
       <aside className="w-[340px] h-full bg-white/40 backdrop-blur-2xl border-r border-white/60 flex flex-col shrink-0 z-20 shadow-[4px_0_24px_rgba(0,0,0,0.05)] overflow-y-auto custom-scrollbar relative">
         
-        {/* NUEVO BOTÓN VOLVER (INTEGRADO EN CABECERA) */}
+        {/* BOTÓN VOLVER (INTEGRADO EN CABECERA) */}
         <div className="bg-white/30 backdrop-blur-md border-b border-white/40 p-4 flex items-center gap-3 cursor-pointer hover:bg-white/60 transition-colors" onClick={() => setCurrentView('list')}>
           <div className="p-1.5 bg-white/60 rounded-lg shadow-sm border border-white/80">
             <ArrowLeft className="w-4 h-4 text-slate-700" />
@@ -344,7 +388,6 @@ export default function App() {
           <span className="text-[11px] font-black uppercase tracking-wider text-slate-700">Volver al Inventario</span>
         </div>
 
-        {/* RESTO DE LA CABECERA INTACTA */}
         <div className="h-64 w-full relative shrink-0 bg-gray-900 group">
           <img src={animalData.photo} alt="Vaca" className="w-full h-full object-cover opacity-90 transition-transform duration-700" />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/20 to-transparent" />
@@ -585,8 +628,11 @@ export default function App() {
                 <div className="col-span-2 md:col-span-1"><label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-2">Número de Arete / ID</label><input type="text" name="arete" required className="w-full bg-white/60 backdrop-blur-md border border-white/80 rounded-xl py-3.5 px-4 focus:border-[#e65100] focus:ring-2 focus:ring-[#e65100]/20 outline-none text-sm font-bold text-slate-800 shadow-inner" placeholder="Ej. #99882" /></div>
                 <div className="col-span-2 md:col-span-1"><label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-2">Nombre (Opcional)</label><input type="text" name="nombre" className="w-full bg-white/60 backdrop-blur-md border border-white/80 rounded-xl py-3.5 px-4 focus:border-[#e65100] focus:ring-2 focus:ring-[#e65100]/20 outline-none text-sm font-bold text-slate-800 shadow-inner" placeholder="Ej. Estrella" /></div>
                 
+                <div className="col-span-2 md:col-span-1"><label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-2">Sexo</label><select name="sexo" className="w-full bg-white/60 backdrop-blur-md border border-white/80 rounded-xl py-3.5 px-4 focus:border-[#e65100] focus:ring-2 focus:ring-[#e65100]/20 outline-none text-sm font-bold text-slate-800 shadow-inner"><option>Hembra</option><option>Macho</option></select></div>
                 <div className="col-span-2 md:col-span-1"><label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-2">Categoría</label><select name="categoria" className="w-full bg-white/60 backdrop-blur-md border border-white/80 rounded-xl py-3.5 px-4 focus:border-[#e65100] focus:ring-2 focus:ring-[#e65100]/20 outline-none text-sm font-bold text-slate-800 shadow-inner"><option>Vaca</option><option>Novilla</option><option>Mauta</option><option>Becerra</option><option>Toro</option><option>Maute</option><option>Becerro</option></select></div>
+                
                 <div className="col-span-2 md:col-span-1"><label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-2">Raza Principal</label><select name="raza" className="w-full bg-white/60 backdrop-blur-md border border-white/80 rounded-xl py-3.5 px-4 focus:border-[#e65100] focus:ring-2 focus:ring-[#e65100]/20 outline-none text-sm font-bold text-slate-800 shadow-inner"><option>Carora</option><option>Holstein</option><option>Jersey</option><option>Gyr</option><option>Mestizo</option></select></div>
+                <div className="col-span-2 md:col-span-1"><label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-2">Condición Corporal</label><input type="number" step="0.1" name="cc" className="w-full bg-white/60 backdrop-blur-md border border-white/80 rounded-xl py-3.5 px-4 focus:border-[#e65100] focus:ring-2 focus:ring-[#e65100]/20 outline-none text-sm font-bold text-slate-800 shadow-inner" placeholder="Ej. 3.5" /></div>
 
                 <div className="col-span-2 md:col-span-1"><label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-2">Lote / Grupo</label><select name="lote" className="w-full bg-white/60 backdrop-blur-md border border-white/80 rounded-xl py-3.5 px-4 focus:border-[#e65100] focus:ring-2 focus:ring-[#e65100]/20 outline-none text-sm font-bold text-slate-800 shadow-inner"><option>Lote Alta Producción</option><option>Levante</option><option>Desarrollo</option><option>Enfermería</option></select></div>
                 <div className="col-span-2 md:col-span-1"><label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-2">Potrero (Ubicación)</label><select name="potrero" className="w-full bg-white/60 backdrop-blur-md border border-white/80 rounded-xl py-3.5 px-4 focus:border-[#e65100] focus:ring-2 focus:ring-[#e65100]/20 outline-none text-sm font-bold text-slate-800 shadow-inner"><option>Potrero 1</option><option>Potrero 2</option><option>Potrero 3</option><option>Potrero 4</option></select></div>
